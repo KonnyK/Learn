@@ -6,18 +6,39 @@ using UnityEngine.Networking;
 public class Game_Manager : NetworkBehaviour {
 
     [SerializeField] private GameObject[] Prefabs = new GameObject[3];
-    [SerializeField] private static Level_Manager LvlManager;
-    [SerializeField] private static Player_Manager PManager;
-    [SerializeField] private static Enemy_Manager AiManager;
-    [SerializeField] private static bool allowUpdate = false;  //allow other scripts to do  sth.  in Update()
-
-    public static Level_Manager Levels() { return LvlManager; }
-    public static Player_Manager Players() { return PManager; }
-    public static Enemy_Manager Enemies() { return AiManager; }
+    [SerializeField] private Level_Manager LevelManager;
+    [SerializeField] private Player_Manager PlayerManager;
+    [SerializeField] private Enemy_Manager EnemyManager;
+    [SerializeField] private bool allowUpdate = false;  //allow other scripts to do  sth.  in Update()
+    
+    [ClientRpc]
+    public void RpcRename(string newName)
+    {
+        gameObject.name = newName;
+    }
 
     public void Start()
     {
-        if (!isServer) return;
+        if (localPlayerAuthority)
+        {
+            if (isServer)
+            {
+                gameObject.name = "Server";
+                RpcRename("Server");
+            }
+            else gameObject.name = "Server";
+        }
+        if (gameObject.name == "Server")
+        {
+            LevelManager = gameObject.GetComponent<Level_Manager>();
+            PlayerManager = gameObject.GetComponent<Player_Manager>();
+            EnemyManager = gameObject.GetComponent<Enemy_Manager>();
+        } else
+        {
+            LevelManager = GameObject.Find("Server").GetComponent<Level_Manager>();
+            PlayerManager = GameObject.Find("Server").GetComponent<Player_Manager>();
+            EnemyManager = GameObject.Find("Server").GetComponent<Enemy_Manager>();
+        }
         GameObject.Instantiate(Prefabs[0], this.transform);
         GameObject.Instantiate(Prefabs[1], this.transform);
         GameObject.Instantiate(Prefabs[2], this.transform);
