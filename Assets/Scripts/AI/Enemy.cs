@@ -7,16 +7,19 @@ public class Enemy : NetworkBehaviour {
     [SyncVar] private float MaxDistance = 0;
     [SyncVar] private  Vector3 Spawn = Vector3.zero;
     [SyncVar] private int Type = 0;
+    private static Enemy_Manager EnemyManager;
 
     public new int GetType() { return Type; } //überschreibt alte GetType Funktion, daher "new"
     public void CmdNewMaxDistance(float newMax) { MaxDistance = newMax; }
 
-    public void Initialize(int Type, float MaxDistance,  Transform Spawn)
+    //this needs to be called before any Enemy initializes
+    public static void SetEnemyManager(Enemy_Manager EM) { Enemy.EnemyManager = EM; }
+
+    public void Initialize(int Type)
     { //constructor
         this.Type = Type;
-        this.MaxDistance = MaxDistance;
-        transform.localPosition = this.Spawn = Spawn.position; //reset Position
-        transform.localRotation = Spawn.rotation; //reset Rotation
+        MaxDistance = EnemyManager.getMaxDistance();
+        transform.localPosition = this.Spawn = EnemyManager.getSpawn(); //reset Position
         EnemyTypes.getType(Type).Animate(transform);
         NetworkServer.Spawn(this.gameObject);
     }
@@ -29,7 +32,7 @@ public class Enemy : NetworkBehaviour {
         {
             if (Vector3.Magnitude(transform.localPosition - Spawn) > MaxDistance) //kills this Object if too far away and lets EnemyMAnager create a new one
             {
-                Game_Manager.Enemies().AddRemove(Type, 1);
+                EnemyManager.AddRemove(Type, 1);
                 GameObject.Destroy(this.gameObject);
             }
         }

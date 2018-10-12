@@ -7,7 +7,14 @@ using UnityEngine.Networking;
 public class Enemy_Manager : NetworkBehaviour {
 
     [SerializeField] private GameObject defaultEnemy;
+    [SerializeField] private Vector3 SpawnPos = Vector3.zero;
     [SerializeField] private float MaxDistance = 100; //only for overwiew, not for killing Enemies when they're too far away, for that look directly into Enemy script
+    [SerializeField] private Level_Manager LevelManager;
+
+    public void Initialize()
+    {
+        LevelManager = gameObject.GetComponent<Level_Manager>();
+    }
 
     public int EnemyAmount() { return transform.childCount; }
     public int EnemyAmount(int Type)
@@ -27,7 +34,7 @@ public class Enemy_Manager : NetworkBehaviour {
         if (Amount > 0) for (int i = 0; i < Amount; i++)
             {
                 Instantiate(defaultEnemy, transform);
-                transform.GetChild(transform.childCount - 1).GetComponent<Enemy>().Initialize(Type, MaxDistance, transform); //change the values of the new object
+                transform.GetChild(transform.childCount - 1).GetComponent<Enemy>().Initialize(Type); //change the values of the new object
             }
         else foreach (Transform Child in transform) //goes through all Enemies and removes those with type == Type until Amount <= 0
             {
@@ -42,8 +49,12 @@ public class Enemy_Manager : NetworkBehaviour {
 
     public void RefreshMaxDistance()
     {
-        MaxDistance = Game_Manager.Levels().getLevelRadius();
+        MaxDistance = LevelManager.getLevelRadius();
         foreach (Transform Child in transform) Child.GetComponent<Enemy>().CmdNewMaxDistance(MaxDistance);
     }
     
+    public float getMaxDistance() { return LevelManager.getLevelRadius(); }
+
+    public Vector3 getSpawn() { return SpawnPos; }
+
 }
