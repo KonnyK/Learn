@@ -5,6 +5,12 @@ using UnityEngine;
 public class CollisionDetect : MonoBehaviour {
 
     [SerializeField] private Player player; //set in Editor
+    [SerializeField] private Level_Manager LevelManager;
+
+    private void Initialize()
+    {
+        LevelManager = GameObject.Find("Server").GetComponent<Level_Manager>();
+    }
 
     void Update()
     {
@@ -18,7 +24,7 @@ public class CollisionDetect : MonoBehaviour {
                     {
                         player.ChangeStatus(2);
                         //Loading next Level if its  the last Checkpoint
-                        if (Game_Manager.Levels().IsInGoal(transform.position))
+                        if (LevelManager.IsInGoal(transform.position))
                         {
                             Debug.Log("Final Checkpoint!");
                             GameObject.Find("GameManager").GetComponent<Game_Manager>().PrepareNextLvl();

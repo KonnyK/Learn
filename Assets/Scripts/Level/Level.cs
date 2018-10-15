@@ -1,30 +1,16 @@
 ﻿using System;
+using System.Linq; //used for Pth.Last()
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
-using UnityEngine.Networking;
 
-public class Level : NetworkBehaviour
+public class Level
 {
 
-    //this class is made by Zoelovezle on https://answers.unity.com/questions/1122411/synclist-to.html
-    public class SyncListVector : SyncList<Vector3>
-    {
-        protected override void SerializeItem(NetworkWriter writer, Vector3 item)
-        {
-            writer.Write(item);
-        }
-        protected override Vector3 DeserializeItem(NetworkReader reader)
-        {
-            return reader.ReadVector3();
-        }
-    }
-
-    [SerializeField] private SyncListVector Path = new SyncListVector() { }; //only Positions of Checkpoints
-    [SerializeField, SyncVar] private float LvlRotation = 0; //in degrees
-    [SerializeField, SyncVar] int Design = 0; //determines which type of checkpoint and platform will be used
-    [SerializeField, SyncVar] private int EnemyAmount; //first number is type, second is Amount
-    [SerializeField, SyncVar] private int EnemyType;
+    [SerializeField] private List<Vector3> Path; //only Positions of Checkpoints
+    [SerializeField] private float LvlRotation = 0; //in degrees
+    [SerializeField] int Design = 0; //determines which type of checkpoint and platform will be used
+    [SerializeField] private int EnemyAmount; //first number is type, second is Amount
+    [SerializeField] private int EnemyType;
 
     private Vector3 LocalToGlobalRotation(Vector3 V) //rotates the Vector around the Y-Axis so it align with the rotation of the level
     {
@@ -45,7 +31,6 @@ public class Level : NetworkBehaviour
     public int AI_Amount() { return EnemyAmount; }
 
     //constructor
-    [Command]
     public void CmdReNew(int EnemyType, int EnemyAmount, int DesignNum, float PathLength, Vector2 AngleRange, bool Clockwise) //Angle in Radiant
     { //notice that "generating is referring to saving Vector3 values in Path[] not actual Instatiation/Spawning
         this.EnemyAmount = EnemyAmount;
@@ -78,29 +63,15 @@ public class Level : NetworkBehaviour
         }
     }
 
-    [ClientRpc]
-    private void RpcClean()
+    public void Instantiate(Transform parent) //IMPORTANT: Scale of Platform has to be (1,1,1)
     {
-        foreach (Transform Child in transform) GameObject.Destroy(Child.gameObject);
-        transform.rotation = Quaternion.Euler(0, 0, 0);
-        Debug.Log("Cleaning on behalf of " + Game_Manager.Levels().transform.GetComponent<NetworkIdentity>().netId, this);
-    }
-    [ClientRpc]
-    private void RpcSetRotation(Quaternion Rot) { transform.rotation = Rot; }
-
-    [Command]
-    public void CmdInstantiate() //IMPORTANT: Scale of Platform has to be (1,1,1)
-    {
-        RpcClean();
 
         //Checkpoints
         foreach (Vector3 CP in Path)
         {
-            GameObject.Instantiate(Level_Manager.GetCheckpointDesign(Design), CP, Quaternion.LookRotation(Vector3.forward, Vector3.up), transform);
-            Vector3 CurrentScale = transform.GetChild(transform.childCount - 1).transform.localScale;
-            Debug.Break();
-            NetworkServer.Spawn(transform.GetChild(transform.childCount - 1).gameObject);
-            transform.GetChild(transform.childCount - 1).transform.localScale = new Vector3(Level_Manager.GetWidth(), CurrentScale.y, Level_Manager.GetWidth());
+            GameObject.Instantiate(Level_Manager.GetCheckpointDesign(Design), CP, Quaternion.LookRotation(Vector3.forward, Vector3.up), parent);
+            Vector3 CurrentScale = parent.GetChild(parent.childCount - 1).transform.localScale;
+            parent.GetChild(parent.childCount - 1).transform.localScale = new Vector3(Level_Manager.GetWidth(), CurrentScale.y, Level_Manager.GetWidth());
         }
 
         //Platforms
@@ -110,16 +81,12 @@ public class Level : NetworkBehaviour
             Vector3 Pos = (Path[i] + Path[i - 1]) / 2;
             //Rotation so that z-axis points form last to this Checkpoint
             Quaternion Rot = Quaternion.LookRotation(Path[i] - Path[i - 1], Vector3.up);
-            GameObject.Instantiate(Level_Manager.GetPlatformDesign(Design), Pos, Rot, transform);
+            GameObject.Instantiate(Level_Manager.GetPlatformDesign(Design), Pos, Rot, parent);
             //scaling
-            Vector3 CurrentScale = transform.GetChild(transform.childCount - 1).transform.localScale;
-            transform.GetChild(transform.childCount - 1).transform.localScale =
+            Vector3 CurrentScale = parent.GetChild(parent.childCount - 1).transform.localScale;
+            parent.GetChild(parent.childCount - 1).transform.localScale =
                 new Vector3(Level_Manager.GetWidth(), CurrentScale.y, Vector3.Magnitude(Path[i] - Path[i - 1])); //changing scale
-            NetworkServer.Spawn(transform.GetChild(transform.childCount - 1).gameObject);
         }
-
-        //rotating parent around y-axis
-        RpcSetRotation(Quaternion.Euler(0, LvlRotation, 0));
     }
 }
 

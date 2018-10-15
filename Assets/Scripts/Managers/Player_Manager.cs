@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
-public class Player_Manager : MonoBehaviour {
+public class Player_Manager : NetworkBehaviour {
 
     [SerializeField] private List<Player> Players = new List<Player>() { };
     [SerializeField] private GameObject defaultPlayer; //PlayerPrefab
@@ -12,7 +13,11 @@ public class Player_Manager : MonoBehaviour {
         return Players[PlayerNumber].getControls();
     }
 
-    public Player getLocalPlayer() { return Players[0]; }
+    public Player getLocalPlayer()
+    {
+        foreach (Player P in Players) if (P.transform.GetComponent<NetworkIdentity>().hasAuthority) return P;
+        return null;
+    }
 
     public void NewPlayer(string Name)
     {

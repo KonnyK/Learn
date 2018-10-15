@@ -20,42 +20,30 @@ public class Game_Manager : NetworkBehaviour {
     public void Start()
     {
         if (localPlayerAuthority)
-        {
+        {//making sure the server is called Server on every Client
             if (isServer)
             {
                 gameObject.name = "Server";
-                RpcRename("Server");
+                RpcRename("Server");//maybe not needed
             }
-            else gameObject.name = "Server";
+            else if (gameObject.name != "Server") { gameObject.name = "Server"; Debug.Log("Server Benennung fehlgeschlagen.", this); }
         }
+
         if (gameObject.name == "Server")
         {
-            LevelManager = gameObject.GetComponent<Level_Manager>();
-            PlayerManager = gameObject.GetComponent<Player_Manager>();
-            EnemyManager = gameObject.GetComponent<Enemy_Manager>();
+            LevelManager = transform.GetComponent<Level_Manager>();
+            PlayerManager = transform.GetComponent<Player_Manager>();
+            EnemyManager = transform.GetComponent<Enemy_Manager>();
+            LevelManager.CmdInitialize();
         } else
         {
             LevelManager = GameObject.Find("Server").GetComponent<Level_Manager>();
             PlayerManager = GameObject.Find("Server").GetComponent<Player_Manager>();
             EnemyManager = GameObject.Find("Server").GetComponent<Enemy_Manager>();
         }
-        GameObject.Instantiate(Prefabs[0], this.transform);
-        GameObject.Instantiate(Prefabs[1], this.transform);
-        GameObject.Instantiate(Prefabs[2], this.transform);
-        LvlManager = transform.GetComponentInChildren<Level_Manager>();
-        PManager = transform.GetComponentInChildren<Player_Manager>();
-        AiManager = transform.GetComponentInChildren<Enemy_Manager>();
-        LvlManager.transform.parent = transform.parent;
-        PManager.transform.parent = transform.parent;
-        AiManager.transform.parent = transform.parent;
-        NetworkServer.Spawn(LvlManager.gameObject);
-        NetworkServer.Spawn(PManager.gameObject);
-        NetworkServer.Spawn(AiManager.gameObject);
-        Debug.Log( LvlManager.transform.GetComponent<NetworkIdentity>().netId+ "   " + PManager.transform.GetComponent<NetworkIdentity>().netId + "   " + AiManager.transform.GetComponent<NetworkIdentity>().netId, this);
-        LvlManager.CmdInitialize();
-
-
-        //PManager.NewPlayer("Bob");
+        Debug.Log("LevelManager: " + LevelManager.transform.GetComponent<NetworkIdentity>().netId, this);
+        Debug.Log("PlayerManager: " + PlayerManager.transform.GetComponent<NetworkIdentity>().netId, this);
+        Debug.Log("EnemyManager: " + EnemyManager.transform.GetComponent<NetworkIdentity>().netId, this);
         
         PrepareNextLvl();
         allowUpdate = true;
