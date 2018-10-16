@@ -6,23 +6,23 @@ public class Level_Manager : NetworkBehaviour {
 
     //read-only
     [SerializeField] private static readonly Vector2 CornersPerRing = new Vector2(4, 12);
-    [SerializeField] private static GameObject[] Checkpoints; //array of all Checkpointprefabs Index=style
-    [SerializeField] private static GameObject[] Platforms; //array of all platform prefabs
-    [SerializeField] private GameObject[] Cpoints; //used for initialization. should be handled differently, but this is a lazy solution for now
-    [SerializeField] private GameObject[] Pforms; //see above
+    [SerializeField] private GameObject[] Checkpoints; //array of all Checkpointprefabs Index=style
+    [SerializeField] private GameObject[] Platforms; //array of all platform prefabs
     [SerializeField] private static readonly float VoidWidth = 30; //distance between tthe paths and also Path width
     [SerializeField] private static readonly float MinRadius = 50; //minimal Radius so it doesn't get impossible hard, the last Checkpoint of a level has always this distance to the center
+    [SerializeField] private readonly uint LevelAmount = 20; //Amount of Leveö´ls generated on initialize
 
-    public static GameObject GetCheckpointDesign(int DesignNum) { return Checkpoints[DesignNum]; }
-    public static GameObject GetPlatformDesign(int DesignNum) { return Platforms[DesignNum]; }
+    public GameObject GetCheckpointDesign(int DesignNum) { return Checkpoints[DesignNum]; }
+    public GameObject GetPlatformDesign(int DesignNum) { return Platforms[DesignNum]; }
     public static float GetWidth() { return VoidWidth; }
     public static float GetMinRadius() { return MinRadius; }
 
     [SerializeField, SyncVar] private int Difficulty = 5; //single increments by 1 or 2 won't do much
     [SerializeField, SyncVar] private float CurrentLvlRadius = 0; //used for Enemy MaxDistance and MapCam
-    [SerializeField, SyncVar] private Vector3 SpawnAreaPos = Vector3.zero; //first are all lower coordinates, second are width, height and depth of cube
-    [SerializeField, SyncVar] private Vector3 SpawnAreaSize = Vector3.one;
+    [SerializeField, SyncVar] private Vector3 SpawnAreaPos = Vector3.zero; //all lower coordinates of spawnarea-box
+    [SerializeField, SyncVar] private Vector3 SpawnAreaSize = Vector3.one; //width, height and depth of spawnarea-box
 
+    [SerializeField] private List<Level> Levels;
     [SerializeField] private Level CurrentLevel; //set in Editor, Parent of all Platforms & Checkpoints
 
     public float getLevelRadius() { return CurrentLvlRadius; }
@@ -37,9 +37,12 @@ public class Level_Manager : NetworkBehaviour {
     [Command]
     public void CmdInitialize() //has to be called at the start of the game
     {
-        Debug.Log("Initialized on server", this);
-        Checkpoints = Cpoints;
-        Platforms = Pforms;
+        int Index = -1;
+        while (Index < LevelAmount)
+        {
+            Index++;
+            Levels.Add(new Levelksdhflkasdhfösldkjgblksjdfga);
+        }
         foreach (Transform Child in transform) NetworkServer.Spawn(Child.gameObject);
         CurrentLevel = GameObject.Find("Level").GetComponent<Level>();
         RpcInitialize();

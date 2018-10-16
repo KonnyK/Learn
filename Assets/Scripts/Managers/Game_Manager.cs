@@ -5,11 +5,11 @@ using UnityEngine.Networking;
 
 public class Game_Manager : NetworkBehaviour {
 
-    [SerializeField] private GameObject[] Prefabs = new GameObject[3];
     [SerializeField] private Level_Manager LevelManager;
     [SerializeField] private Player_Manager PlayerManager;
     [SerializeField] private Enemy_Manager EnemyManager;
-    [SerializeField] private bool allowUpdate = false;  //allow other scripts to do  sth.  in Update()
+    [SerializeField, SyncVar] private bool allowUpdate = false;  //used for pausing the game, only the "Server" has the the true value.
+    [SerializeField] private Game_Manager ServerManager; //usen on by not servers only
     
     [ClientRpc]
     public void RpcRename(string newName)
@@ -31,33 +31,42 @@ public class Game_Manager : NetworkBehaviour {
 
         if (gameObject.name == "Server")
         {
+            ServerManager = null; //not "this" to avoid unseen endless loops with allowupdate
             LevelManager = transform.GetComponent<Level_Manager>();
             PlayerManager = transform.GetComponent<Player_Manager>();
             EnemyManager = transform.GetComponent<Enemy_Manager>();
-            LevelManager.CmdInitialize();
+            LevelManager.Initialize();
         } else
         {
-            LevelManager = GameObject.Find("Server").GetComponent<Level_Manager>();
-            PlayerManager = GameObject.Find("Server").GetComponent<Player_Manager>();
-            EnemyManager = GameObject.Find("Server").GetComponent<Enemy_Manager>();
+            ServerManager = GameObject.Find("Server").GetComponent<Game_Manager>();
+            LevelManager = ServerManager.GetComponent<Level_Manager>();
+            PlayerManager = ServerManager.GetComponent<Player_Manager>();
+            EnemyManager = ServerManager.GetComponent<Enemy_Manager>();
+            transform.GetComponent<Level_Manager>().enabled = false;
+            transform.GetComponent<Player_Manager>().enabled = false;
+            transform.GetComponent<Enemy_Manager>().enabled = false;
         }
         Debug.Log("LevelManager: " + LevelManager.transform.GetComponent<NetworkIdentity>().netId, this);
         Debug.Log("PlayerManager: " + PlayerManager.transform.GetComponent<NetworkIdentity>().netId, this);
         Debug.Log("EnemyManager: " + EnemyManager.transform.GetComponent<NetworkIdentity>().netId, this);
         
-        PrepareNextLvl();
+        CmdPrepareNextLvl();
         allowUpdate = true;
     }
 
-    public static bool CanUpdate() { return allowUpdate; }
+    public bool CanUpdate()
+    {
+        if (gameObject.name == "Server") return allowUpdate;
+        else return ServerManager.CanUpdate();
+    }
 
-    public void PrepareNextLvl()
+    public void CmdPrepareNextLvl()
     {
         Debug.Log("Preparing next lvl", this);
         allowUpdate = false;
-        LvlManager.CmdLoadNextLevel();
-        PManager.RespawnAll(); 
-        AiManager.RefreshMaxDistance();
+        LevelManager.CmdLoadNextLevel();
+        PlayerManager.RespawnAll(); 
+        EnemyManager.RefreshMaxDistance();
         allowUpdate = true;
     }
 }
