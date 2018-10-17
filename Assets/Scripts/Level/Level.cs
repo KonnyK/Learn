@@ -31,7 +31,7 @@ public class Level
     public int AI_Amount() { return EnemyAmount; }
 
     //constructor
-    public void Level(int EnemyType, int EnemyAmount, int DesignNum, float PathLength, Vector2 AngleRange, bool Clockwise) //Angle in Radiant
+    public Level(int EnemyType, int EnemyAmount, int DesignNum, float PathLength, Vector2 AngleRange, bool Clockwise) //Angle in Radiant
     { //notice that "generating is referring to saving Vector3 values in Path[] not actual Instatiation/Spawning
         this.EnemyAmount = EnemyAmount;
         this.EnemyType = EnemyType;

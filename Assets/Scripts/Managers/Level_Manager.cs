@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
+using System;
 using UnityEngine;
 using UnityEngine.Networking;
 
 public class Level_Manager : NetworkBehaviour {
 
     //read-only
-    [SerializeField] private static readonly Vector2 CornersPerRing = new Vector2(4, 12);
+    [SerializeField] private static readonly Vector2 AngleRange = new Vector2(360/4, 360/12);
     [SerializeField] private GameObject[] Checkpoints; //array of all Checkpointprefabs Index=style
     [SerializeField] private GameObject[] Platforms; //array of all platform prefabs
     [SerializeField] private static readonly float VoidWidth = 30; //distance between tthe paths and also Path width
@@ -17,7 +18,7 @@ public class Level_Manager : NetworkBehaviour {
     public static float GetWidth() { return VoidWidth; }
     public static float GetMinRadius() { return MinRadius; }
 
-    [SerializeField, SyncVar] private int Difficulty = 5; //single increments by 1 or 2 won't do much
+    [SerializeField, SyncVar] private int Difficulty = 1; //single increments by 1 or 2 won't do much
     [SerializeField, SyncVar] private float CurrentLvlRadius = 0; //used for Enemy MaxDistance and MapCam
     [SerializeField, SyncVar] private Vector3 SpawnAreaPos = Vector3.zero; //all lower coordinates of spawnarea-box
     [SerializeField, SyncVar] private Vector3 SpawnAreaSize = Vector3.one; //width, height and depth of spawnarea-box
@@ -41,17 +42,17 @@ public class Level_Manager : NetworkBehaviour {
         while (Index < LevelAmount)
         {
             Index++;
-            Levels.Add(new Levelksdhflkasdhfösldkjgblksjdfga);
+            System.Random R = new System.Random();
+            Levels.Add(new Level(R.Next(EnemyTypes.EnemyTypeAmount()-1),
+                                 Difficulty * Index * 10 + 10,
+                                 R.Next(Math.Min(Checkpoints.Length, Platforms.Length)-1),
+                                 Difficulty * 30 + 50,
+                                 AngleRange,
+                                 (Index%2==0)
+                                )
+                      );
         }
-        foreach (Transform Child in transform) NetworkServer.Spawn(Child.gameObject);
-        CurrentLevel = GameObject.Find("Level").GetComponent<Level>();
-        RpcInitialize();
-    }
-
-    [ClientRpc]
-    public void RpcInitialize()
-    {
-        Debug.Log("Initialized on client", this);
+        Debug.Log("Levels generated", this);
         GameObject.Find("MapCamera").transform.parent = this.transform;
         GameObject.Find("Level").transform.parent = this.transform;
         CurrentLevel = GameObject.Find("Level").GetComponent<Level>();

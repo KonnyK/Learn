@@ -70,7 +70,7 @@ MonoBehaviour:
   m_MinSize: {x: 887, y: 613}
   m_MaxSize: {x: 16012, y: 18063}
   vertical: 0
-  controlID: 9
+  controlID: 46
 --- !u!114 &4
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -170,7 +170,7 @@ MonoBehaviour:
   m_MinSize: {x: 610, y: 613}
   m_MaxSize: {x: 12010, y: 18063}
   vertical: 1
-  controlID: 10
+  controlID: 47
 --- !u!114 &8
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -259,7 +259,7 @@ MonoBehaviour:
   m_MinSize: {x: 610, y: 221}
   m_MaxSize: {x: 12010, y: 4021}
   vertical: 0
-  controlID: 11
+  controlID: 168
 --- !u!114 &12
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -418,7 +418,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: d6fbffffd8fbffff00000000
+    m_ExpandedIDs: cefbffffd0fbffff00000000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -559,20 +559,20 @@ MonoBehaviour:
     m_ShowAllHits: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Scripts/Player
+    - Assets/Prefabs/GameStart
   m_ViewMode: 1
   m_StartGridSize: 64
   m_LastFolders:
-  - Assets/Scripts/Player
+  - Assets/Prefabs/GameStart
   m_LastFoldersGridSize: -1
   m_LastProjectPath: C:\Users\konra\Desktop\Dokumente\Unity Projects\Dodgeball
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 19}
-    m_SelectedIDs: 742a0000
-    m_LastClickedID: 10868
-    m_ExpandedIDs: 00000000122a0000402a0000c22b0000702c0000fc2e0000fe2e000000ca9a3b
+    m_SelectedIDs: cc2a0000
+    m_LastClickedID: 10956
+    m_ExpandedIDs: 00000000262a0000542a0000cc2a0000d42b0000822c00000c2f00000e2f000000ca9a3b
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -600,7 +600,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 00000000122a0000402a0000c22b0000702c0000fc2e0000fe2e0000
+    m_ExpandedIDs: 00000000262a0000542a0000d42b0000822c00000c2f00000e2f0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -627,8 +627,8 @@ MonoBehaviour:
   m_ListAreaState:
     m_SelectedInstanceIDs: 
     m_LastClickedInstanceID: 0
-    m_HadKeyboardFocusLastEvent: 0
-    m_ExpandedInstanceIDs: c623000000000000002b00005c550000362900008c270000ee9fffffe852ffff52090000
+    m_HadKeyboardFocusLastEvent: 1
+    m_ExpandedInstanceIDs: c623000000000000002b00005c550000362900008c270000ee9fffffe852ffff52090000bc2a0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
