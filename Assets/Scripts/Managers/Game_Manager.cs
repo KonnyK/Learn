@@ -11,6 +11,10 @@ public class Game_Manager : NetworkBehaviour {
     [SerializeField, SyncVar] private bool allowUpdate = false;  //used for pausing the game, only the "Server" has the the true value.
     [SerializeField] private Game_Manager ServerManager; //usen on by not servers only
     
+    public Level_Manager getLevelManager() { return LevelManager; }
+    public Player_Manager getPlayerManager() { return PlayerManager; }
+    public Enemy_Manager getEnemyManager() { return EnemyManager; }
+
     [ClientRpc]
     public void RpcRename(string newName)
     {
@@ -27,6 +31,7 @@ public class Game_Manager : NetworkBehaviour {
                 RpcRename("Server");//maybe not needed
             }
             else if (gameObject.name != "Server") { gameObject.name = "Server"; Debug.Log("Server Benennung fehlgeschlagen.", this); }
+            transform.GetComponentInChildren<MapCamControl>().Initialize();
         }
 
         if (gameObject.name == "Server")
@@ -35,7 +40,7 @@ public class Game_Manager : NetworkBehaviour {
             LevelManager = transform.GetComponent<Level_Manager>();
             PlayerManager = transform.GetComponent<Player_Manager>();
             EnemyManager = transform.GetComponent<Enemy_Manager>();
-            LevelManager.Initialize();
+            LevelManager.CmdInitialize();
         } else
         {
             ServerManager = GameObject.Find("Server").GetComponent<Game_Manager>();

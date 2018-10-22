@@ -63,13 +63,13 @@ public class Level
         }
     }
 
-    public void Instantiate(Transform parent) //IMPORTANT: Scale of Platform has to be (1,1,1)
+    public void Instantiate(Transform parent, GameObject[] Designs) //IMPORTANT: Scale of Platform has to be (1,1,1)
     {
 
         //Checkpoints
         foreach (Vector3 CP in Path)
         {
-            GameObject.Instantiate(Level_Manager.GetCheckpointDesign(Design), CP, Quaternion.LookRotation(Vector3.forward, Vector3.up), parent);
+            GameObject.Instantiate(Designs[0], CP, Quaternion.LookRotation(Vector3.forward, Vector3.up), parent);
             Vector3 CurrentScale = parent.GetChild(parent.childCount - 1).transform.localScale;
             parent.GetChild(parent.childCount - 1).transform.localScale = new Vector3(Level_Manager.GetWidth(), CurrentScale.y, Level_Manager.GetWidth());
         }
