@@ -82,8 +82,6 @@
     <Compile Include="Assets\Scripts\UI\Messenger.cs" />
     <Compile Include="Assets\Scripts\UI\PlayerFeed.cs" />
     <Compile Include="Assets\Scripts\UI\PlayerMenu.cs" />
-    <None Include="Assets\Scripts\Player\Volld as geile skript jo.txt" />
-    <None Include="Assets\Scripts\Player\Volld as geile skript jo - Kopie.txt" />
     <Reference Include="UnityEditor.StandardEvents">
       <HintPath>C:/Users/konra/Desktop/Dokumente/Unity Projects/Dodgeball/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
     </Reference>

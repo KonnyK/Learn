@@ -27,11 +27,10 @@ public class Level
     public int getDesign() { return Design; }
     public Vector3 getFirstPos() { return LocalToGlobalRotation(Path[0]); }
     public Vector3 getLastPos() { return LocalToGlobalRotation(Path.Last()); }
-    public int AI_Type() { return EnemyType; }
-    public int AI_Amount() { return EnemyAmount; }
+    public int getEnemyAmount() { return this.EnemyAmount; }
 
     //constructor
-    public Level(int EnemyType, int EnemyAmount, int DesignNum, float PathLength, Vector2 AngleRange, bool Clockwise) //Angle in Radiant
+    public Level(int EnemyAmount, int DesignNum, float PathLength, Vector2 AngleRange, bool Clockwise) //Angle in Radiant
     { //notice that "generating is referring to saving Vector3 values in Path[] not actual Instatiation/Spawning
         this.EnemyAmount = EnemyAmount;
         this.EnemyType = EnemyType;
@@ -81,7 +80,7 @@ public class Level
             Vector3 Pos = (Path[i] + Path[i - 1]) / 2;
             //Rotation so that z-axis points form last to this Checkpoint
             Quaternion Rot = Quaternion.LookRotation(Path[i] - Path[i - 1], Vector3.up);
-            GameObject.Instantiate(Level_Manager.GetPlatformDesign(Design), Pos, Rot, parent);
+            GameObject.Instantiate(Designs[1], Pos, Rot, parent);
             //scaling
             Vector3 CurrentScale = parent.GetChild(parent.childCount - 1).transform.localScale;
             parent.GetChild(parent.childCount - 1).transform.localScale =

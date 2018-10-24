@@ -9,5 +9,6 @@ public class ObjectPoolManager : NetworkBehaviour {
 	public void RpcClear()
     {
         foreach (Transform Child in transform) Destroy(Child.gameObject);
+        if (!isServer) Destroy(this.gameObject);
     }
 }

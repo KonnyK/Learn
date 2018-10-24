@@ -4,13 +4,13 @@ using UnityEngine.Networking;
 
 public class Enemy : NetworkBehaviour {
 
-    [SyncVar] private float MaxDistance = 0;
+    private float MaxDistance = 0;
     [SyncVar] private  Vector3 Spawn = Vector3.zero;
     [SyncVar] private int Type = 0;
     private static Enemy_Manager EnemyManager;
 
     public new int GetType() { return Type; } //überschreibt alte GetType Funktion, daher "new"
-    public void CmdNewMaxDistance(float newMax) { MaxDistance = newMax; }
+    [ClientRpc] public void RpcNewMaxDistance(float newMax) { MaxDistance = newMax; }
 
     //this needs to be called before any Enemy initializes
     public static void SetEnemyManager(Enemy_Manager EM) { Enemy.EnemyManager = EM; }
