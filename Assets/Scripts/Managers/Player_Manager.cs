@@ -8,22 +8,33 @@ public class Player_Manager : NetworkBehaviour {
     [SerializeField] private List<Player> Players = new List<Player>() { };
     [SerializeField] private GameObject defaultPlayer; //PlayerPrefab
 
-    public Controls getControls(int PlayerNumber)
+    public Controls getLocalControls()
     {
-        return Players[PlayerNumber].getControls();
+        Player P = getLocalPlayer();
+        if (P != null) return P.getControls();
+        else return null;
     }
 
     public Player getLocalPlayer()
     {
-        foreach (Player P in Players) if (P.transform.GetComponent<NetworkIdentity>().hasAuthority) return P;
+        foreach (Player P in Players) if (P.transform.GetComponentInParent<NetworkIdentity>().hasAuthority) return P;
         return null;
     }
-
-    public void NewPlayer(string Name)
+    
+    public void RegisterNewPlayer(Player NewPlayer)
     {
-        GameObject.Instantiate(defaultPlayer, transform);
-        transform.GetChild(transform.childCount - 1).GetComponent<Player>().Initialize(Name);
-        Players.Add(transform.GetChild(transform.childCount - 1).GetComponent<Player>());
+        int Index = Players.Count;
+        uint NewPlayerNetID = NewPlayer.GetComponentInParent<NetworkIdentity>().netId.Value;
+        for (int i = 0; i < Players.Count; i++)
+        {
+            if (Players[i].GetComponentInParent<NetworkIdentity>().netId.Value > NewPlayerNetID)
+            {
+                Index = i;
+                break;
+            }
+        }
+        NewPlayer.Initialize("Player", NewPlayerNetID);
+        Players.Insert(Index, NewPlayer);
     }
 
     public void RespawnAll()
