@@ -7,50 +7,50 @@ using UnityEngine.Networking;
 public class Enemy_Manager : NetworkBehaviour {
 
     [SerializeField] private GameObject defaultEnemy;
-    [SerializeField] private Vector3 SpawnPos = Vector3.zero;
-    [SerializeField] private float MaxDistance = 100; //only for overwiew, not for killing Enemies when they're too far away, for that look directly into Enemy script
+    [SerializeField, SyncVar] private Vector3 SpawnPos = Vector3.zero;
+    [SerializeField, SyncVar] private float MaxDistance = 100;
     [SerializeField] private Level_Manager LevelManager;
+    [SerializeField] private Transform EnemyParent;
 
-    public void Initialize()
+    //is only called from within "if (isServer)"
+    public void Initialize(string EnemyParentName)
     {
-        LevelManager = gameObject.GetComponent<Level_Manager>();
+        GameObject.Instantiate(new GameObject(EnemyParentName));
+        EnemyParent = GameObject.Find(EnemyParentName).transform;
+        EnemyParent.gameObject.AddComponent<NetworkIdentity>();
+        EnemyParent.gameObject.AddComponent<ObjectPoolManager>();
+        NetworkServer.Spawn(EnemyParent.gameObject);
+        RpcInitialize(EnemyParentName);
+    }
+
+    [ClientRpc]
+    private void RpcInitialize(string EnemyParentName)
+    {
+        EnemyParent = GameObject.Find(EnemyParentName).transform;
+        LevelManager = gameObject.GetComponent<Game_Manager>().getLevelManager();
     }
 
     public int EnemyAmount() { return transform.childCount; }
-    public int EnemyAmount(int Type)
-    {
-        int Amount = 0;
-        foreach (Transform Child in transform) if (Child.GetComponent<Enemy>().GetType() == Type) Amount++;
-        return Amount;
-    }
+    public int EnemyAmount(int Type) { return EnemyParent.childCount; }
 
-    public void Clear()
-    { //removes all Enemies
-        foreach (Transform Child in transform) GameObject.Destroy(Child.gameObject);
-    }
-
-    public void AddRemove(int Type, int Amount)
+    [Command]
+    public void CmdSpawnEnemies(int Type, int Amount)
     {
+        EnemyParent.GetComponent<ObjectPoolManager>().RpcClear();
         if (Amount > 0) for (int i = 0; i < Amount; i++)
             {
-                Instantiate(defaultEnemy, transform);
-                transform.GetChild(transform.childCount - 1).GetComponent<Enemy>().Initialize(Type); //change the values of the new object
+                Instantiate(defaultEnemy, EnemyParent);
+                EnemyParent.GetChild(EnemyParent.childCount - 1).GetComponent<Enemy>().Initialize(Type); //change the values of the new object
             }
-        else foreach (Transform Child in transform) //goes through all Enemies and removes those with type == Type until Amount <= 0
-            {
-                if (Child.GetComponent<Enemy>().GetType() == Type)
-                {
-                    GameObject.Destroy(Child.GetComponent<Enemy>().gameObject);
-                    Type--;
-                }
-                if (Amount <= 0) break;
-            }
+        NetworkServer.Spawn(EnemyParent.gameObject);
+        RefreshMaxDistance();
     }
 
+    [Server]
     public void RefreshMaxDistance()
     {
         MaxDistance = LevelManager.getLevelRadius();
-        foreach (Transform Child in transform) Child.GetComponent<Enemy>().CmdNewMaxDistance(MaxDistance);
+        foreach (Transform Child in transform) Child.GetComponent<Enemy>().RpcNewMaxDistance(MaxDistance);
     }
     
     public float getMaxDistance() { return LevelManager.getLevelRadius(); }

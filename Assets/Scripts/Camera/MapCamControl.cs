@@ -2,28 +2,28 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MapCamControl : MonoBehaviour
+public class MapCamControl : MonoBehaviour //parent should be PlayerClient
 {
 
     private Controls currentControls;
-    private Level_Manager LevelManager;
+    private Game_Manager GameManager;
 
 
     public void Initialize() //called by Levelmanager
     {
         transform.position = 100*Vector3.up;
-        LevelManager = GameObject.Find("Server").GetComponent<Level_Manager>();
-        currentControls = GameObject.Find("Server").GetComponent<Player_Manager>().getLocalPlayer().getControls();
+        GameManager = GameObject.Find(Game_Manager.ServerGameManagerName).GetComponent<Game_Manager>();
+        currentControls = GameManager.getPlayerManager().getLocalPlayer().getControls();
     }
 
     void Update()
     {
-        if (Game_Manager.CanUpdate())
+        if (GameManager.CanUpdate())
         {
             if (Input.GetKeyDown(currentControls.getKey("Show Map")))
             {
                 transform.GetComponent<Camera>().enabled = true;
-                transform.GetComponent<Camera>().orthographicSize = LevelManager.getLevelRadius();
+                transform.GetComponent<Camera>().orthographicSize = GameManager.getLevelManager().getLevelRadius();
             }
             if (Input.GetKeyUp(currentControls.getKey("Show Map")))
             {

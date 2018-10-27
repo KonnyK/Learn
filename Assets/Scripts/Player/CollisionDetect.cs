@@ -9,7 +9,7 @@ public class CollisionDetect : MonoBehaviour {
 
     private void Initialize()
     {
-        LevelManager = GameObject.Find("Server").GetComponent<Level_Manager>();
+        LevelManager = GameObject.Find(Game_Manager.ServerGameManagerName).GetComponent<Game_Manager>().getLevelManager();
     }
 
     void Update()

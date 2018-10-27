@@ -27,11 +27,10 @@ public class Level
     public int getDesign() { return Design; }
     public Vector3 getFirstPos() { return LocalToGlobalRotation(Path[0]); }
     public Vector3 getLastPos() { return LocalToGlobalRotation(Path.Last()); }
-    public int AI_Type() { return EnemyType; }
-    public int AI_Amount() { return EnemyAmount; }
+    public int getEnemyAmount() { return this.EnemyAmount; }
 
     //constructor
-    public void CmdReNew(int EnemyType, int EnemyAmount, int DesignNum, float PathLength, Vector2 AngleRange, bool Clockwise) //Angle in Radiant
+    public Level(int EnemyAmount, int DesignNum, float PathLength, Vector2 AngleRange, bool Clockwise) //Angle in Radiant
     { //notice that "generating is referring to saving Vector3 values in Path[] not actual Instatiation/Spawning
         this.EnemyAmount = EnemyAmount;
         this.EnemyType = EnemyType;
@@ -63,13 +62,13 @@ public class Level
         }
     }
 
-    public void Instantiate(Transform parent) //IMPORTANT: Scale of Platform has to be (1,1,1)
+    public void Instantiate(Transform parent, GameObject[] Designs) //IMPORTANT: Scale of Platform has to be (1,1,1)
     {
 
         //Checkpoints
         foreach (Vector3 CP in Path)
         {
-            GameObject.Instantiate(Level_Manager.GetCheckpointDesign(Design), CP, Quaternion.LookRotation(Vector3.forward, Vector3.up), parent);
+            GameObject.Instantiate(Designs[0], CP, Quaternion.LookRotation(Vector3.forward, Vector3.up), parent);
             Vector3 CurrentScale = parent.GetChild(parent.childCount - 1).transform.localScale;
             parent.GetChild(parent.childCount - 1).transform.localScale = new Vector3(Level_Manager.GetWidth(), CurrentScale.y, Level_Manager.GetWidth());
         }
@@ -81,7 +80,7 @@ public class Level
             Vector3 Pos = (Path[i] + Path[i - 1]) / 2;
             //Rotation so that z-axis points form last to this Checkpoint
             Quaternion Rot = Quaternion.LookRotation(Path[i] - Path[i - 1], Vector3.up);
-            GameObject.Instantiate(Level_Manager.GetPlatformDesign(Design), Pos, Rot, parent);
+            GameObject.Instantiate(Designs[1], Pos, Rot, parent);
             //scaling
             Vector3 CurrentScale = parent.GetChild(parent.childCount - 1).transform.localScale;
             parent.GetChild(parent.childCount - 1).transform.localScale =

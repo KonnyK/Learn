@@ -35,6 +35,8 @@ public class EnemyTypes {
         //implement new types here
     };
 
+    public static int EnemyTypeAmount() { return Types.Length; }
+
     public static TypeValues getType(int Type) { return Types[Type];  }
 }
  

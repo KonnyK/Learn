@@ -1,60 +1,66 @@
 ﻿using System.Collections.Generic;
+using System;
 using UnityEngine;
 using UnityEngine.Networking;
 
 public class Level_Manager : NetworkBehaviour {
 
     //read-only
-    [SerializeField] private static readonly Vector2 CornersPerRing = new Vector2(4, 12);
-    [SerializeField] private static GameObject[] Checkpoints; //array of all Checkpointprefabs Index=style
-    [SerializeField] private static GameObject[] Platforms; //array of all platform prefabs
-    [SerializeField] private GameObject[] Cpoints; //used for initialization. should be handled differently, but this is a lazy solution for now
-    [SerializeField] private GameObject[] Pforms; //see above
+    [SerializeField] private static readonly Vector2 AngleRange = new Vector2(360/4, 360/12);
+    [SerializeField] private GameObject[] Checkpoints; //array of all Checkpointprefabs Index=style
+    [SerializeField] private GameObject[] Platforms; //array of all platform prefabs
     [SerializeField] private static readonly float VoidWidth = 30; //distance between tthe paths and also Path width
     [SerializeField] private static readonly float MinRadius = 50; //minimal Radius so it doesn't get impossible hard, the last Checkpoint of a level has always this distance to the center
+    [SerializeField] private readonly uint LevelAmount = 20; //Amount of Leveö´ls generated on initialize
 
-    public static GameObject GetCheckpointDesign(int DesignNum) { return Checkpoints[DesignNum]; }
-    public static GameObject GetPlatformDesign(int DesignNum) { return Platforms[DesignNum]; }
+    public GameObject GetCheckpointDesign(int DesignNum) { return Checkpoints[DesignNum]; }
+    public GameObject GetPlatformDesign(int DesignNum) { return Platforms[DesignNum]; }
     public static float GetWidth() { return VoidWidth; }
     public static float GetMinRadius() { return MinRadius; }
 
-    [SerializeField, SyncVar] private int Difficulty = 5; //single increments by 1 or 2 won't do much
+    [SerializeField, SyncVar] private int Difficulty = 0; //single increments by 1 or 2 won't do much
     [SerializeField, SyncVar] private float CurrentLvlRadius = 0; //used for Enemy MaxDistance and MapCam
-    [SerializeField, SyncVar] private Vector3 SpawnAreaPos = Vector3.zero; //first are all lower coordinates, second are width, height and depth of cube
-    [SerializeField, SyncVar] private Vector3 SpawnAreaSize = Vector3.one;
+    [SerializeField, SyncVar] private Vector3 SpawnAreaPos = Vector3.zero; //all lower coordinates of spawnarea-box
+    [SerializeField, SyncVar] private Vector3 SpawnAreaSize = Vector3.one; //width, height and depth of spawnarea-box
 
+    [SerializeField] private List<Level> Levels;
     [SerializeField] private Level CurrentLevel; //set in Editor, Parent of all Platforms & Checkpoints
+    [SerializeField] private Transform LevelTransform;
+    [SerializeField] private Game_Manager GameManager;//set on initialize
 
     public float getLevelRadius() { return CurrentLvlRadius; }
 
-    [Command]
-    private void CmdRefreshLvlRadius() //called everytime a Lvl loads
-    { //recalculates the maxiumum distance from center any object could have in current level
-        CurrentLvlRadius = Vector3.Magnitude(CurrentLevel.getFirstPos()) //Distance of furthest Checkpoint
-                           + Checkpoints[CurrentLevel.getDesign()].transform.lossyScale.x; //distance fromcenter of a checkpoint to a corner of the transform 
-    }
 
-    [Command]
-    public void CmdInitialize() //has to be called at the start of the game
+    //is only called from within "if (isServer)"
+    public void Initialize(string LevelTransformName) //has to be called at the start of the game
     {
-        Debug.Log("Initialized on server", this);
-        Checkpoints = Cpoints;
-        Platforms = Pforms;
-        foreach (Transform Child in transform) NetworkServer.Spawn(Child.gameObject);
-        CurrentLevel = GameObject.Find("Level").GetComponent<Level>();
-        RpcInitialize();
+        for (int i = -1; i < LevelAmount; i++) Levels.Add(BuildNewLevel());
+        GameObject.Instantiate(new GameObject(LevelTransformName));
+        LevelTransform = GameObject.Find(LevelTransformName).transform;
+        LevelTransform.gameObject.AddComponent<NetworkIdentity>();
+        LevelTransform.gameObject.AddComponent<ObjectPoolManager>();
+        NetworkServer.Spawn(LevelTransform.gameObject);
+        RpcInitialize(LevelTransformName);
     }
 
     [ClientRpc]
-    public void RpcInitialize()
-    {
-        Debug.Log("Initialized on client", this);
-        GameObject.Find("MapCamera").transform.parent = this.transform;
-        GameObject.Find("Level").transform.parent = this.transform;
-        CurrentLevel = GameObject.Find("Level").GetComponent<Level>();
-        transform.GetComponentInChildren<MapCamControl>().Initialize();
+    private void RpcInitialize(string LevelTransformName)
+    { 
+        GameManager = gameObject.GetComponent<Game_Manager>();
+        LevelTransform = GameObject.Find(LevelTransformName).transform;
+    }
 
-        CurrentLevel.CmdReNew(0, 5, 0, 50 * Difficulty, 2 * Mathf.PI * new Vector2(1 / CornersPerRing.x, 1 / CornersPerRing.y), true);
+    [Server]
+    private Level BuildNewLevel()
+    {
+        Difficulty += 10;
+        System.Random R = new System.Random();
+        return new Level(    Difficulty + 10,
+                             R.Next(Math.Min(Checkpoints.Length, Platforms.Length) - 1),
+                             Difficulty * 30 + 50,
+                             AngleRange,
+                             (R.Next(1) == 0)
+                        );
     }
 
     [Command]
@@ -62,16 +68,23 @@ public class Level_Manager : NetworkBehaviour {
     { //creates as many GameObjects of type Checkpoint and Platform as saved in Level to load
         Debug.Log("Loading next Level");
 
-        //generate new Level
-        Difficulty += 2;
-        CurrentLevel.CmdReNew(0, 50 * Difficulty, Random.Range(0, Checkpoints.Length - 1), 50 * Difficulty, 2 * Mathf.PI * new Vector2(1 / CornersPerRing.x, 1 / CornersPerRing.y), (Random.value > 0.5f));
-        //Instantiate new level
-        CurrentLevel.CmdInstantiate();
-        CmdRefreshLvlRadius(); //needed for MapCamera and EnemyMaxDistance
+        if (LevelTransform.childCount != 0) LevelTransform.GetComponent<ObjectPoolManager>().RpcClear();
 
-        if (Game_Manager.Enemies().EnemyAmount() != 0) Game_Manager.Enemies().Clear(); //delete old Enemies if existant
-        Game_Manager.Enemies().AddRemove(CurrentLevel.AI_Type(), CurrentLevel.AI_Amount()); //spawn Enemies                   
-        Debug.Log("Spawning Enemies: " + CurrentLevel.AI_Type() + "," + CurrentLevel.AI_Amount());
+        if (LevelAmount == 0) Levels[0] = CurrentLevel = BuildNewLevel();
+        else
+        {
+            int CurrentLvlNum = 0;
+            for (int i = 0; i < Levels.Count; i++) if (Levels[i].Equals(CurrentLevel)) { Debug.Log("Found a similiar Level"); CurrentLvlNum = i; }
+            CurrentLevel = Levels[CurrentLvlNum + 1];
+        }
+        GameObject[] Designs = {Checkpoints[CurrentLevel.getDesign()], Checkpoints[CurrentLevel.getDesign()]};
+        CurrentLevel.Instantiate(LevelTransform, Designs);
+      
+        RefreshLvlRadius(); //needed for MapCamera and EnemyMaxDistance
+        NetworkServer.Spawn(LevelTransform.gameObject);
+
+        GameManager.getEnemyManager().CmdSpawnEnemies(CurrentLevel.getDesign(), CurrentLevel.getEnemyAmount()); //spawn Enemies                   
+        Debug.Log("Spawning Enemies: " + CurrentLevel.getDesign() + "," + CurrentLevel.getEnemyAmount());
     }
     
     //first Vector is position (lowest coordinate values) second is edge length of cube
@@ -86,7 +99,7 @@ public class Level_Manager : NetworkBehaviour {
         newPos =
             new Vector3(
                 Mathf.Min(CurrentLevel.getFirstPos().x + Tolerance.x, CurrentLevel.getFirstPos().x - Tolerance.x),
-                CurrentLevel.getFirstPos().y + Tolerance.y + Game_Manager.Players().getLocalPlayer().transform.lossyScale.y / 2, //CP Position + half of CP height + half of Playermodel height
+                CurrentLevel.getFirstPos().y + Tolerance.y + GameManager.getPlayerManager().getLocalPlayer().transform.lossyScale.y / 2, //CP Position + half of CP height + half of Playermodel height
                 Mathf.Min(CurrentLevel.getFirstPos().z + Tolerance.z, CurrentLevel.getFirstPos().z - Tolerance.z));
         Vector3 newSize = Vector3.one;
         newSize = Tolerance * 2;
@@ -102,9 +115,16 @@ public class Level_Manager : NetworkBehaviour {
         return new Vector3[] {SpawnAreaPos, SpawnAreaSize};
     } 
 
-    public bool IsInGoal(Vector3 Pos) //returns true when Pos is above the final checkpoint of a level
+    [Command]
+    public bool CmdIsInGoal(Vector3 Pos) //returns true when Pos is above the final checkpoint of a level
     {
         return (Vector3.Magnitude(Vector3.ProjectOnPlane(CurrentLevel.getLastPos() - Pos, Vector3.up)) <= VoidWidth/2); 
     }
 
+    private void RefreshLvlRadius() //called everytime a Lvl loads
+    { //recalculates the maxiumum distance from center any object could have in current level
+        if (!isServer) Debug.Log("Refreshing Lvl Radius on Client! This is not intended", this);
+        CurrentLvlRadius = Vector3.Magnitude(CurrentLevel.getFirstPos()) //Distance of furthest Checkpoint
+                           + Checkpoints[CurrentLevel.getDesign()].transform.lossyScale.x; //distance fromcenter of a checkpoint to a corner of the transform 
+    }
 }
