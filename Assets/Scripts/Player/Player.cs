@@ -32,9 +32,9 @@ public class Player : MonoBehaviour {
     public Controls getControls() { return P_Controls; }
 
 
-    public void Initialize(string Name)
+    public void Initialize(string Name, uint Number)
     {
-        P_Number = transform.GetSiblingIndex();
+        P_Number = Number;
         P_Name = Name;
         gameObject.name = "Player" + P_Number;
 

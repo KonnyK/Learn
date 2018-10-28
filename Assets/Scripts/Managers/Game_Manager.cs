@@ -7,6 +7,7 @@ public class Game_Manager : NetworkBehaviour {
 
     public static readonly string ServerGameManagerName = "Master"; //Name of the GameObject/GameManager that has local authority on Server, name is for all clients
     public static readonly string LocalAuthorityGameManagerName = "Local"; //Name of the GameObject/GameManager with localAuthority, different for everyone, there's no local on the server
+    public static readonly string NoAuthorityGameManagerName = "Other";
     [SerializeField] private Level_Manager LevelManager;
     [SerializeField] private Player_Manager PlayerManager;
     [SerializeField] private Enemy_Manager EnemyManager;
@@ -25,6 +26,7 @@ public class Game_Manager : NetworkBehaviour {
 
     public void Start()
     {
+        gameObject.name = NoAuthorityGameManagerName;
         if (localPlayerAuthority)
         {//making sure the server is called Server on every Client
             if (isServer)
@@ -60,9 +62,16 @@ public class Game_Manager : NetworkBehaviour {
         Debug.Log("LevelManager: " + LevelManager.transform.GetComponent<NetworkIdentity>().netId, this);
         Debug.Log("PlayerManager: " + PlayerManager.transform.GetComponent<NetworkIdentity>().netId, this);
         Debug.Log("EnemyManager: " + EnemyManager.transform.GetComponent<NetworkIdentity>().netId, this);
-        
-        CmdPrepareNextLvl();
-        allowUpdate = true;
+
+        if (localPlayerAuthority)
+        {
+            if (isServer)
+            {
+                CmdPrepareNextLvl();
+                allowUpdate = true;
+            }
+        }
+        PlayerManager.RegisterNewPlayer(transform.GetComponentInChildren<Player>());
     }
 
     public bool CanUpdate()
