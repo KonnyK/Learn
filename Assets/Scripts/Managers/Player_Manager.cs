@@ -33,8 +33,8 @@ public class Player_Manager : NetworkBehaviour {
                 break;
             }
         }
-        NewPlayer.Initialize("Player", NewPlayerNetID);
         Players.Insert(Index, NewPlayer);
+        NewPlayer.CmdInitialize("Player", NewPlayerNetID);
     }
 
     public void RespawnAll()
