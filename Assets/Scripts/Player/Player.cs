@@ -209,11 +209,11 @@ public class Player : NetworkBehaviour {
 
     //usually called (from outside) this delays the Respawn
     //runs only on 1 Client!!!!!
-    [Client]
-    private void RequestRespawn()
+    [Command]
+    public void CmdRequestRespawn()
     {
-        CmdChangeStatus(-2);
-        Invoke("CmdRespawn", RespawnTime);
+        RpcChangeStatus(-2);
+        Invoke("RpcRespawn", RespawnTime);
     }
 
     //internally called and  exceptionally for instant (re)spawning

@@ -1,20 +1,22 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
-public class CollisionDetect : MonoBehaviour {
+public class CollisionDetect : NetworkBehaviour {
 
     [SerializeField] private Player player; //set in Editor
-    [SerializeField] private Level_Manager LevelManager;
+    [SerializeField] private Game_Manager GameManager;
 
+    [Client]
     private void Initialize()
     {
-        LevelManager = GameObject.Find(Game_Manager.ServerGameManagerName).GetComponent<Game_Manager>().getLevelManager();
+        GameManager = transform.GetComponentInParent<Game_Manager>();
     }
 
     void Update()
     {
-        if (Game_Manager.CanUpdate())
+        if (GameManager.CanUpdate() && hasAuthority)
         {
             RaycastHit Hit;
             if (player.isAlive()) if (Physics.Raycast(transform.position, Vector3.down, out Hit))
@@ -22,21 +24,21 @@ public class CollisionDetect : MonoBehaviour {
                     //handles Invincibility if Alive and something is below
                     if (Hit.transform.gameObject.tag == "CP")
                     {
-                        player.ChangeStatus(2);
+                        player.CmdChangeStatus(2);
                         //Loading next Level if its  the last Checkpoint
-                        if (LevelManager.IsInGoal(transform.position))
+                        if (GameManager.getLevelManager().CmdIsInGoal(transform.position))
                         {
                             Debug.Log("Final Checkpoint!");
-                            GameObject.Find("GameManager").GetComponent<Game_Manager>().PrepareNextLvl();
+                            GameManager.PrepareNextLvl();
                         }
                     }
-                    else if (Hit.transform.gameObject.tag == "PF") player.ChangeStatus(1);
+                    else if (Hit.transform.gameObject.tag == "PF") player.CmdChangeStatus(1);
                 }
                 else //=> nothing below
                 {
                     Debug.Log("Player killed for floating.");
-                    player.Kill();
-                    player.RequestRespawn();
+                    player.CmdKill();
+                    player.CmdRequestRespawn();
                 }
         }
     }
@@ -44,12 +46,12 @@ public class CollisionDetect : MonoBehaviour {
 
     private void OnTriggerEnter(Collider Other)
     {
-        if (Game_Manager.CanUpdate())
+        if (GameManager.CanUpdate())
         {
             if (Other.transform.parent.tag == "Enemy" & !player.isInvincible() & player.isAlive())
             {
-                player.Kill();
-                player.RequestRespawn();
+                player.CmdKill();
+                player.CmdRequestRespawn();
             }
         }
     }

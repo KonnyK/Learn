@@ -85,12 +85,17 @@ public class Game_Manager : NetworkBehaviour {
     {
         if (gameObject.name == ServerGameManagerName)
         {
-            Debug.Log("Preparing next lvl", this);
             allowUpdate = false;
-            LevelManager.CmdLoadNextLevel();
-            PlayerManager.RespawnAll();
+            RpcPrepareNextLvl();
             allowUpdate = true;
         }
         else ServerManager.CmdPrepareNextLvl();
+    }
+    [ClientRpc]
+    private void RpcPrepareNextLvl()
+    {
+            Debug.Log("Preparing next lvl", this);
+            PlayerManager.RespawnAll();
+        if (isServer) LevelManager.CmdLoadNextLevel();
     }
 }
