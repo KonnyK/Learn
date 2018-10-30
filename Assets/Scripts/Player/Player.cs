@@ -34,6 +34,11 @@ public class Player : NetworkBehaviour {
     [ClientRpc]
     private void RpcInitialize(string Name, int Number)
     {
+        if (!hasAuthority && !isServer)
+        {
+            transform.GetComponent<CollisionDetect>().enabled = false;
+            transform.GetComponent<Movement>().enabled = false;
+        }
         P_Number = Number;
         P_Name = Name;
         gameObject.name = "Player" + P_Number;
@@ -57,9 +62,24 @@ public class Player : NetworkBehaviour {
     {
         if (isAlive() & GameManager.CanUpdate()) RecoverStamina(1);
         //else transform.Find("Info" + P_Number).GetComponent<PlayerFeed>().DeathMessage(Time.time - TimeofDeath, transform.parent.name);
+        if (hasAuthority) CmdSyncTransforms(transform.position, transform.rotation, Mesh.forward); 
     }
 
-
+    [Command]
+    private void CmdSyncTransforms(Vector3 Pos, Quaternion Rot, Vector3 Facing)
+    {
+        RpcSyncTransforms(Pos, Rot, Facing);
+    }
+    [ClientRpc]
+    private void RpcSyncTransforms(Vector3 Pos, Quaternion Rot, Vector3 Facing)
+    {
+        if (!hasAuthority)
+        {
+            transform.position = Pos;
+            transform.rotation = Rot;
+            OrientateMesh(Facing, Vector3.up);
+        }
+    }
 
     //Stamina management
     public bool ConsumeStamina(float Amount)

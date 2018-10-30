@@ -24,7 +24,7 @@ public class Game_Manager : NetworkBehaviour {
         gameObject.name = newName;
     }
 
-    public void Start()
+    public void OnConnectedToServer()
     {
         gameObject.name = NoAuthorityGameManagerName;
         if (localPlayerAuthority)
@@ -67,7 +67,7 @@ public class Game_Manager : NetworkBehaviour {
         {
             if (isServer)
             {
-                CmdPrepareNextLvl();
+                RpcPrepareNextLvl();
                 allowUpdate = true;
             }
         }

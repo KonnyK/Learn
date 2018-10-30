@@ -7,34 +7,45 @@ public class Enemy : NetworkBehaviour {
     private float MaxDistance = 0;
     [SyncVar] private  Vector3 Spawn = Vector3.zero;
     [SyncVar] private int Type = 0;
-    private static Enemy_Manager EnemyManager;
+    private static Game_Manager GameManager = null;
 
     public new int GetType() { return Type; } //überschreibt alte GetType Funktion, daher "new"
     [ClientRpc] public void RpcNewMaxDistance(float newMax) { MaxDistance = newMax; }
 
-    //this needs to be called before any Enemy initializes
-    public static void SetEnemyManager(Enemy_Manager EM) { Enemy.EnemyManager = EM; }
+    //called on Enemy_Manager initialize on every client
+    public static void SetGameManager(Game_Manager GM) { GameManager = GM; }
 
     public void Initialize(int Type)
     { //constructor
-        this.Type = Type;
-        MaxDistance = EnemyManager.getMaxDistance();
-        transform.localPosition = this.Spawn = EnemyManager.getSpawn(); //reset Position
-        EnemyTypes.getType(Type).Animate(transform);
-        NetworkServer.Spawn(this.gameObject);
+        MaxDistance = GameManager.getEnemyManager().getMaxDistance();
+        if (isServer)
+        {
+            this.Type = Type;
+            this.Spawn = transform.localPosition;
+        }
+        if (hasAuthority) CmdRespawn(); 
     }
-    
-    //    Velocity = EnemyTypes.getType(Type).newRandomSpeed() * Vector3.Normalize(new Vector3(UnityEngine.Random.value * 2 - 1, 0, UnityEngine.Random.value * 2 - 1));
+
+    [Command]
+    private void CmdRespawn()
+    {
+        EnemyTypes.getType(Type).Animate(transform);
+        Rigidbody RB = transform.GetComponent<Rigidbody>();
+        RpcReAnimate(RB.velocity, RB.angularVelocity);
+    }
+    [ClientRpc]
+    private void RpcReAnimate(Vector3 Vel, Vector3 AngVel)
+    {
+        transform.position = Spawn;
+        transform.GetComponent<Rigidbody>().velocity = Vel;
+        transform.GetComponent<Rigidbody>().angularVelocity = AngVel;
+    }
 
     void FixedUpdate()
     {
-        if (Game_Manager.CanUpdate())
+        if (GameManager.CanUpdate() && Vector3.Magnitude(transform.localPosition - Spawn) > MaxDistance) //kills this Object if too far away and lets EnemyMAnager create a new one
         {
-            if (Vector3.Magnitude(transform.localPosition - Spawn) > MaxDistance) //kills this Object if too far away and lets EnemyMAnager create a new one
-            {
-                EnemyManager.AddRemove(Type, 1);
-                GameObject.Destroy(this.gameObject);
-            }
+                CmdRespawn();
         }
     }
 
