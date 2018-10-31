@@ -6,12 +6,18 @@ public class Movement : MonoBehaviour {
 
     [SerializeField] private float Acceleration = 300;
     [SerializeField] private float MaxSpeed = 20;
-    [SerializeField] private Vector3 TargetPos;
+    private Vector3 TargetPos;
     [SerializeField] private Transform TargetMarker; //set in Editor
     [SerializeField] private Player myPlayer; //set in Editor
     [SerializeField] private Rigidbody RB; //set in Editor
     [SerializeField] private Camera PlayerCam; //set in, you guessed it, Editor
-    [SerializeField] private bool TargetCancelled = false; //used to prevent Target from beeing used again instatntly eventhough it was cancelled
+    private bool TargetCancelled = false; //used to prevent Target from being used again instatntly eventhough it was cancelled
+    Game_Manager GameManager;
+
+    public void Initialized()
+    {
+        GameManager = transform.GetComponentInParent<Game_Manager>();
+    }
 
     public void ClearTarget()
     {
@@ -22,7 +28,7 @@ public class Movement : MonoBehaviour {
 
     private void FixedUpdate()
     {
-        if (Game_Manager.CanUpdate() && myPlayer.isAlive())
+        if (GameManager.CanUpdate() && myPlayer.isAlive())
         {
             if (Input.GetMouseButtonDown(0)) TargetCancelled = false; //needed because somtimes MouseButtonUp is not recognized
                                                                       //Managing TargetMarker

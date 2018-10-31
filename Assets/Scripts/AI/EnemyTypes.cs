@@ -7,8 +7,8 @@ public class EnemyTypes {
         public delegate void Func(Transform Entity);//just used for handing over values on initialization, somehow has to be public
 
         private readonly string Name; //the Name of an EnemyType, NOT the name of a specific entity
-        private readonly float BaseSpeed; //actual speed of each enemy is randomly set within (BaseSpeed +/- SpeedTolerance) everytime it respawns
-        private readonly float SpeedTolerance;
+        private readonly float BaseSpeed = 1; //actual speed of each enemy is randomly set within (BaseSpeed +/- SpeedTolerance) everytime it respawns
+        private readonly float SpeedTolerance = 0.2f;
         public Func Animate;
 
         public TypeValues(string Name, Func Animate) //constructor apparently needs to be public too?

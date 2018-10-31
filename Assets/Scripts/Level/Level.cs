@@ -10,7 +10,6 @@ public class Level
     [SerializeField] private float LvlRotation = 0; //in degrees
     [SerializeField] int Design = 0; //determines which type of checkpoint and platform will be used
     [SerializeField] private int EnemyAmount; //first number is type, second is Amount
-    [SerializeField] private int EnemyType;
 
     private Vector3 LocalToGlobalRotation(Vector3 V) //rotates the Vector around the Y-Axis so it align with the rotation of the level
     {
@@ -33,7 +32,6 @@ public class Level
     public Level(int EnemyAmount, int DesignNum, float PathLength, Vector2 AngleRange, bool Clockwise) //Angle in Radiant
     { //notice that "generating is referring to saving Vector3 values in Path[] not actual Instatiation/Spawning
         this.EnemyAmount = EnemyAmount;
-        this.EnemyType = EnemyType;
         Design = DesignNum;
         LvlRotation = UnityEngine.Random.Range(-180, 180); //used when loading the Level so not every level finishes at (X=0, Y=0, Z=MinRadius) this is rotation around y-axis
 

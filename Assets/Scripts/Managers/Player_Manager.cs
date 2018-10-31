@@ -6,7 +6,6 @@ using UnityEngine.Networking;
 public class Player_Manager : NetworkBehaviour {
 
     [SerializeField] private List<Player> Players = new List<Player>() { };
-    [SerializeField] private GameObject defaultPlayer; //PlayerPrefab
 
     public Controls getLocalControls()
     {
@@ -41,7 +40,7 @@ public class Player_Manager : NetworkBehaviour {
     {
         foreach (Player P in Players)
         {
-            P.Respawn();
+            P.CmdRespawn();
         }
     }
 

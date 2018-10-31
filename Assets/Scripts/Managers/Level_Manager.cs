@@ -6,12 +6,12 @@ using UnityEngine.Networking;
 public class Level_Manager : NetworkBehaviour {
 
     //read-only
-    [SerializeField] private static readonly Vector2 AngleRange = new Vector2(360/4, 360/12);
+    private static readonly Vector2 AngleRange = new Vector2(360/4, 360/12);
     [SerializeField] private GameObject[] Checkpoints; //array of all Checkpointprefabs Index=style
     [SerializeField] private GameObject[] Platforms; //array of all platform prefabs
-    [SerializeField] private static readonly float VoidWidth = 30; //distance between tthe paths and also Path width
-    [SerializeField] private static readonly float MinRadius = 50; //minimal Radius so it doesn't get impossible hard, the last Checkpoint of a level has always this distance to the center
-    [SerializeField] private readonly uint LevelAmount = 20; //Amount of Leveö´ls generated on initialize
+    private static readonly float VoidWidth = 30; //distance between tthe paths and also Path width
+    private static readonly float MinRadius = 50; //minimal Radius so it doesn't get impossible hard, the last Checkpoint of a level has always this distance to the center
+    [SerializeField] private uint LevelAmount = 20; //Amount of Leveö´ls generated on initialize
 
     public GameObject GetCheckpointDesign(int DesignNum) { return Checkpoints[DesignNum]; }
     public GameObject GetPlatformDesign(int DesignNum) { return Platforms[DesignNum]; }
@@ -22,11 +22,12 @@ public class Level_Manager : NetworkBehaviour {
     [SerializeField, SyncVar] private float CurrentLvlRadius = 0; //used for Enemy MaxDistance and MapCam
     [SerializeField, SyncVar] private Vector3 SpawnAreaPos = Vector3.zero; //all lower coordinates of spawnarea-box
     [SerializeField, SyncVar] private Vector3 SpawnAreaSize = Vector3.one; //width, height and depth of spawnarea-box
+    [SerializeField, SyncVar] private Vector3 GoalPosition = Vector3.zero; //width, height and depth of spawnarea-box
 
     [SerializeField] private List<Level> Levels;
     [SerializeField] private Level CurrentLevel; //set in Editor, Parent of all Platforms & Checkpoints
-    [SerializeField] private Transform LevelTransform;
-    [SerializeField] private Game_Manager GameManager;//set on initialize
+    private Transform LevelTransform;
+    private Game_Manager GameManager;//set on initialize
 
     public float getLevelRadius() { return CurrentLvlRadius; }
 
@@ -81,6 +82,7 @@ public class Level_Manager : NetworkBehaviour {
         CurrentLevel.Instantiate(LevelTransform, Designs);
       
         RefreshLvlRadius(); //needed for MapCamera and EnemyMaxDistance
+        GoalPosition = CurrentLevel.getLastPos();
         NetworkServer.Spawn(LevelTransform.gameObject);
 
         GameManager.getEnemyManager().CmdSpawnEnemies(CurrentLevel.getDesign(), CurrentLevel.getEnemyAmount()); //spawn Enemies                   
@@ -115,10 +117,9 @@ public class Level_Manager : NetworkBehaviour {
         return new Vector3[] {SpawnAreaPos, SpawnAreaSize};
     } 
 
-    [Command]
-    public bool CmdIsInGoal(Vector3 Pos) //returns true when Pos is above the final checkpoint of a level
+    public bool IsInGoal(Vector3 Pos) //returns true when Pos is above the final checkpoint of a level
     {
-        return (Vector3.Magnitude(Vector3.ProjectOnPlane(CurrentLevel.getLastPos() - Pos, Vector3.up)) <= VoidWidth/2); 
+        return (Vector3.Magnitude(Vector3.ProjectOnPlane(GoalPosition - Pos, Vector3.up)) <= VoidWidth/2); 
     }
 
     private void RefreshLvlRadius() //called everytime a Lvl loads

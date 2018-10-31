@@ -67,7 +67,6 @@
     <Compile Include="Assets\Scripts\Camera\PlayerCamControl.cs" />
     <Compile Include="Assets\Scripts\Level\Level.cs" />
     <Compile Include="Assets\Scripts\Level\ObjectPoolManager.cs" />
-    <Compile Include="Assets\Scripts\Level\ParentSeeker.cs" />
     <Compile Include="Assets\Scripts\Managers\Enemy_Manager.cs" />
     <Compile Include="Assets\Scripts\Managers\Game_Manager.cs" />
     <Compile Include="Assets\Scripts\Managers\Level_Manager.cs" />

@@ -7,16 +7,17 @@ public class PlayerCamControl: MonoBehaviour {
     [SerializeField] private Controls currentControls;
     [SerializeField] private float Height = 12f;
     [SerializeField] private float Angle = 60f;
+    [SerializeField] private Game_Manager GameManager;
 
 
     public void Initialize(Player Owner) //called by Player
     {
         currentControls = Owner.getControls();
-
+        GameManager = transform.GetComponentInParent<Game_Manager>();
     }
 
     void Update () {
-        if (Game_Manager.CanUpdate())
+        if (GameManager.CanUpdate())
         {
 
             if (Input.GetKeyDown(currentControls.getKey("Show Map"))) transform.GetComponent<Camera>().enabled = false;

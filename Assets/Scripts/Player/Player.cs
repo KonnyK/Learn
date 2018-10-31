@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class Player : NetworkBehaviour {
+public class Player : NetworkBehaviour
+{
 
     [SerializeField] private string P_Name;
     [SerializeField] private int P_Number;//PlayerNumber
@@ -16,7 +17,7 @@ public class Player : NetworkBehaviour {
     [SerializeField] private bool Invincible; //used for Checkpoints
 
     [SerializeField] private Vector3 SpawnPos; //Spawnpoint
-    [SerializeField] private readonly int RespawnTime = 3; //Time it will take for the Player to respawn once respawning was started
+    private readonly int RespawnTime = 3; //Time it will take for the Player to respawn once respawning was started
     [SerializeField] private uint Deathcount = 0; //how many times the Player died
 
     [SerializeField] private Game_Manager GameManager;
@@ -29,7 +30,7 @@ public class Player : NetworkBehaviour {
     public bool isInvincible() { return Invincible; }
     public int PlayerNumber() { return P_Number; }
     public string GetName() { return P_Name; }
-    private Controls getControls() { return P_Controls; }
+    public Controls getControls() { return P_Controls; }
 
     [ClientRpc]
     private void RpcInitialize(string Name, int Number)
@@ -39,11 +40,12 @@ public class Player : NetworkBehaviour {
             transform.GetComponent<CollisionDetect>().enabled = false;
             transform.GetComponent<Movement>().enabled = false;
         }
+        else transform.GetComponent<CollisionDetect>().Initialize();
         P_Number = Number;
         P_Name = Name;
         gameObject.name = "Player" + P_Number;
-
         GameManager = transform.GetComponentInParent<Game_Manager>();
+
 
         //rename all Objects with the Playernumber at the end
         for (int i = 0; i < transform.childCount; i++) transform.GetChild(i).name += P_Number;
@@ -62,7 +64,7 @@ public class Player : NetworkBehaviour {
     {
         if (isAlive() & GameManager.CanUpdate()) RecoverStamina(1);
         //else transform.Find("Info" + P_Number).GetComponent<PlayerFeed>().DeathMessage(Time.time - TimeofDeath, transform.parent.name);
-        if (hasAuthority) CmdSyncTransforms(transform.position, transform.rotation, Mesh.forward); 
+        if (hasAuthority) CmdSyncTransforms(transform.position, transform.rotation, Mesh.forward);
     }
 
     [Command]
@@ -84,12 +86,12 @@ public class Player : NetworkBehaviour {
     //Stamina management
     public bool ConsumeStamina(float Amount)
     {
-        if (SP >= Amount) {SP -= Amount; return true;}
+        if (SP >= Amount) { SP -= Amount; return true; }
         else return false;
     }
     public bool RecoverStamina(float Amount)
     {
-        if (SP + Amount <= MaxSP) {SP += Amount; return true;}
+        if (SP + Amount <= MaxSP) { SP += Amount; return true; }
         else return false;
     }
 
@@ -120,7 +122,7 @@ public class Player : NetworkBehaviour {
 
 
         int MaxTries = 100; //after more tries to find a spawn it stops searching
-        int TryAmount = 0; 
+        int TryAmount = 0;
 
         do
         {
@@ -128,7 +130,7 @@ public class Player : NetworkBehaviour {
             newPos = LevelManager.GetSpawnArea()[0];
             newPos.x += UnityEngine.Random.value * (LevelManager.GetSpawnArea()[1].x);
             newPos.y += UnityEngine.Random.value * (LevelManager.GetSpawnArea()[1].y);
-            newPos.z += UnityEngine.Random.value * (LevelManager.GetSpawnArea()[1].z);            
+            newPos.z += UnityEngine.Random.value * (LevelManager.GetSpawnArea()[1].z);
             TryAmount++;
 
         } while ((!Physics.Raycast(newPos, Vector3.down, out Hit) || Hit.transform.tag != "CP") && TryAmount <= MaxTries);
@@ -151,12 +153,12 @@ public class Player : NetworkBehaviour {
     public void CmdChangeStatus(int newStatus) { RpcChangeStatus(newStatus); }
     [ClientRpc]
     private void RpcChangeStatus(int newStatus)
-        ///Status:
-        /// -2: dead, invisible, no collision, invincible, no gravity        (respawning)
-        /// -1: dead, visible, no collision, invincible, gravity             (not respawning)
-        ///  0: none, invisible, no collision, invincible, no gravity        (just joined the Game, never spawned yet)
-        ///  1: alive, visible, collision, vincible, gravity                 (on Platform)
-        ///  2: alive, visible, collision, invincible, gravity               (on Checkpoint)
+    ///Status:
+    /// -2: dead, invisible, no collision, invincible, no gravity        (respawning)
+    /// -1: dead, visible, no collision, invincible, gravity             (not respawning)
+    ///  0: none, invisible, no collision, invincible, no gravity        (just joined the Game, never spawned yet)
+    ///  1: alive, visible, collision, vincible, gravity                 (on Platform)
+    ///  2: alive, visible, collision, invincible, gravity               (on Checkpoint)
     {
         Rigidbody RB = transform.GetComponent<Rigidbody>();
         if (newStatus >= -2 && 2 >= newStatus)
@@ -167,29 +169,29 @@ public class Player : NetworkBehaviour {
                 case -2:
                     {
                         RB.velocity = Vector3.zero;
-                        ShowMesh(false); RB.isKinematic = true;   Invincible = true;    RB.useGravity = false;
+                        ShowMesh(false); RB.isKinematic = true; Invincible = true; RB.useGravity = false;
                     }
                     break;
                 case -1:
                     {
                         RB.velocity = Vector3.zero;
-                        ShowMesh(true);  RB.isKinematic = true;   Invincible = true;     RB.useGravity = true;
+                        ShowMesh(true); RB.isKinematic = true; Invincible = true; RB.useGravity = true;
                     }
                     break;
                 case 0:
                     {
                         RB.velocity = Vector3.zero;
-                        ShowMesh(false); RB.isKinematic = true;   Invincible = true;     RB.useGravity = false;
+                        ShowMesh(false); RB.isKinematic = true; Invincible = true; RB.useGravity = false;
                     }
                     break;
                 case 1:
                     {
-                        ShowMesh(true);  RB.isKinematic = false;  Invincible = false;    RB.useGravity = true;
+                        ShowMesh(true); RB.isKinematic = false; Invincible = false; RB.useGravity = true;
                     }
                     break;
                 case 2:
                     {
-                        ShowMesh(true);  RB.isKinematic = false;  Invincible = true;     RB.useGravity = true;
+                        ShowMesh(true); RB.isKinematic = false; Invincible = true; RB.useGravity = true;
                     }
                     break;
             }
@@ -218,7 +220,7 @@ public class Player : NetworkBehaviour {
 
     //internally called and  exceptionally for instant (re)spawning
     [Command]
-    private void CmdRespawn() { RpcRespawn(); }
+    public void CmdRespawn() { RpcRespawn(); }
     [ClientRpc]
     private void RpcRespawn()
     {
@@ -229,6 +231,6 @@ public class Player : NetworkBehaviour {
             CmdChangeStatus(2);
             SP = MaxSP;
         }
-    }  
+    }
 
 }

@@ -9,7 +9,7 @@ public class CollisionDetect : NetworkBehaviour {
     [SerializeField] private Game_Manager GameManager;
 
     [Client]
-    private void Initialize()
+    public void Initialize()
     {
         GameManager = transform.GetComponentInParent<Game_Manager>();
     }
@@ -26,10 +26,10 @@ public class CollisionDetect : NetworkBehaviour {
                     {
                         player.CmdChangeStatus(2);
                         //Loading next Level if its  the last Checkpoint
-                        if (GameManager.getLevelManager().CmdIsInGoal(transform.position))
+                        if (GameManager.getLevelManager().IsInGoal(transform.position))
                         {
                             Debug.Log("Final Checkpoint!");
-                            GameManager.PrepareNextLvl();
+                            GameManager.CmdPrepareNextLvl();
                         }
                     }
                     else if (Hit.transform.gameObject.tag == "PF") player.CmdChangeStatus(1);

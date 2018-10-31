@@ -8,11 +8,11 @@ public class Game_Manager : NetworkBehaviour {
     public static readonly string ServerGameManagerName = "Master"; //Name of the GameObject/GameManager that has local authority on Server, name is for all clients
     public static readonly string LocalAuthorityGameManagerName = "Local"; //Name of the GameObject/GameManager with localAuthority, different for everyone, there's no local on the server
     public static readonly string NoAuthorityGameManagerName = "Other";
-    [SerializeField] private Level_Manager LevelManager;
-    [SerializeField] private Player_Manager PlayerManager;
-    [SerializeField] private Enemy_Manager EnemyManager;
+    private Level_Manager LevelManager;
+    private Player_Manager PlayerManager;
+    private Enemy_Manager EnemyManager;
     [SerializeField, SyncVar] private bool allowUpdate = false;  //used for pausing the game, only the "Server" has the the true value.
-    [SerializeField] private Game_Manager ServerManager; //used by not master only
+    private Game_Manager ServerManager; //used by not master only
     
     public Level_Manager getLevelManager() { return LevelManager; }
     public Player_Manager getPlayerManager() { return PlayerManager; }

@@ -7,10 +7,10 @@ using UnityEngine.Networking;
 public class Enemy_Manager : NetworkBehaviour {
 
     [SerializeField] private GameObject defaultEnemy;
-    [SerializeField, SyncVar] private Vector3 SpawnPos = Vector3.zero;
+    [SyncVar] private Vector3 SpawnPos = Vector3.zero;
     [SerializeField, SyncVar] private float MaxDistance = 100;
-    [SerializeField] private Level_Manager LevelManager;
-    [SerializeField] private Transform EnemyParent;
+    private Level_Manager LevelManager;
+    private Transform EnemyParent;
 
     //is only called from within "if (isServer)"
     public void Initialize(string EnemyParentName)
@@ -29,6 +29,7 @@ public class Enemy_Manager : NetworkBehaviour {
         if (gameObject.name == Game_Manager.ServerGameManagerName) Enemy.SetGameManager(transform.GetComponent<Game_Manager>());
         EnemyParent = GameObject.Find(EnemyParentName).transform;
         LevelManager = gameObject.GetComponent<Game_Manager>().getLevelManager();
+        SpawnPos = transform.position;
     }
 
     public int EnemyAmount() { return transform.childCount; }
