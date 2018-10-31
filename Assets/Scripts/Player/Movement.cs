@@ -12,12 +12,6 @@ public class Movement : MonoBehaviour {
     [SerializeField] private Rigidbody RB; //set in Editor
     [SerializeField] private Camera PlayerCam; //set in, you guessed it, Editor
     private bool TargetCancelled = false; //used to prevent Target from being used again instatntly eventhough it was cancelled
-    Game_Manager GameManager;
-
-    public void Initialized()
-    {
-        GameManager = transform.GetComponentInParent<Game_Manager>();
-    }
 
     public void ClearTarget()
     {
@@ -28,7 +22,7 @@ public class Movement : MonoBehaviour {
 
     private void FixedUpdate()
     {
-        if (GameManager.CanUpdate() && myPlayer.isAlive())
+        if (Game_Manager.UpdateAllowed && myPlayer.isAlive())
         {
             if (Input.GetMouseButtonDown(0)) TargetCancelled = false; //needed because somtimes MouseButtonUp is not recognized
                                                                       //Managing TargetMarker

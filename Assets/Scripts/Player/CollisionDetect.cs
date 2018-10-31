@@ -6,17 +6,17 @@ using UnityEngine.Networking;
 public class CollisionDetect : NetworkBehaviour {
 
     [SerializeField] private Player player; //set in Editor
-    [SerializeField] private Game_Manager GameManager;
+    private Game_Manager GameManager;
 
     [Client]
     public void Initialize()
     {
-        GameManager = transform.GetComponentInParent<Game_Manager>();
+        GameManager = transform.GetComponent<Game_Manager>();
     }
 
     void Update()
     {
-        if (GameManager.CanUpdate() && hasAuthority)
+        if (Game_Manager.UpdateAllowed && hasAuthority)
         {
             RaycastHit Hit;
             if (player.isAlive()) if (Physics.Raycast(transform.position, Vector3.down, out Hit))
@@ -46,7 +46,7 @@ public class CollisionDetect : NetworkBehaviour {
 
     private void OnTriggerEnter(Collider Other)
     {
-        if (GameManager.CanUpdate())
+        if (Game_Manager.UpdateAllowed)
         {
             if (Other.transform.parent.tag == "Enemy" & !player.isInvincible() & player.isAlive())
             {

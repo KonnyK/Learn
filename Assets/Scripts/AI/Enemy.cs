@@ -4,20 +4,15 @@ using UnityEngine.Networking;
 
 public class Enemy : NetworkBehaviour {
 
-    private float MaxDistance = 0;
+    private float MaxDistance = 10;
     [SyncVar] private  Vector3 Spawn = Vector3.zero;
     [SyncVar] private int Type = 0;
-    private static Game_Manager GameManager = null;
 
     public new int GetType() { return Type; } //überschreibt alte GetType Funktion, daher "new"
     [ClientRpc] public void RpcNewMaxDistance(float newMax) { MaxDistance = newMax; }
 
-    //called on Enemy_Manager initialize on every client
-    public static void SetGameManager(Game_Manager GM) { GameManager = GM; }
-
     public void Initialize(int Type)
     { //constructor
-        MaxDistance = GameManager.getEnemyManager().getMaxDistance();
         if (isServer)
         {
             this.Type = Type;
@@ -43,7 +38,7 @@ public class Enemy : NetworkBehaviour {
 
     void FixedUpdate()
     {
-        if (GameManager.CanUpdate() && Vector3.Magnitude(transform.localPosition - Spawn) > MaxDistance) //kills this Object if too far away and lets EnemyMAnager create a new one
+        if (Game_Manager.UpdateAllowed && Vector3.Magnitude(transform.localPosition - Spawn) > MaxDistance) //kills this Object if too far away and lets EnemyMAnager create a new one
         {
                 CmdRespawn();
         }

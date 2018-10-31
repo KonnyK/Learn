@@ -20,7 +20,6 @@ public class Player : NetworkBehaviour
     private readonly int RespawnTime = 3; //Time it will take for the Player to respawn once respawning was started
     [SerializeField] private uint Deathcount = 0; //how many times the Player died
 
-    [SerializeField] private Game_Manager GameManager;
     [SerializeField] private Transform Mesh; //set in editor
 
 
@@ -44,7 +43,6 @@ public class Player : NetworkBehaviour
         P_Number = Number;
         P_Name = Name;
         gameObject.name = "Player" + P_Number;
-        GameManager = transform.GetComponentInParent<Game_Manager>();
 
 
         //rename all Objects with the Playernumber at the end
@@ -60,9 +58,10 @@ public class Player : NetworkBehaviour
         RpcInitialize(Name, Num);
     }
 
+    [Client]
     private void FixedUpdate()
     {
-        if (isAlive() & GameManager.CanUpdate()) RecoverStamina(1);
+        if (isAlive() & Game_Manager.UpdateAllowed) RecoverStamina(1);
         //else transform.Find("Info" + P_Number).GetComponent<PlayerFeed>().DeathMessage(Time.time - TimeofDeath, transform.parent.name);
         if (hasAuthority) CmdSyncTransforms(transform.position, transform.rotation, Mesh.forward);
     }
@@ -108,7 +107,7 @@ public class Player : NetworkBehaviour
     //randomly choose a new Spawnlocation and check if Spawning is safe
     public bool FindNewSpawn()
     {
-        Level_Manager LevelManager = GameManager.getLevelManager();
+        Level_Manager LevelManager = transform.GetComponent<Game_Manager>().getLevelManager();
         RaycastHit Hit;
         Vector3 newPos = Vector3.zero;
 

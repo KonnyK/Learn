@@ -24,7 +24,7 @@ public class Level_Manager : NetworkBehaviour {
     [SerializeField, SyncVar] private Vector3 SpawnAreaSize = Vector3.one; //width, height and depth of spawnarea-box
     [SerializeField, SyncVar] private Vector3 GoalPosition = Vector3.zero; //width, height and depth of spawnarea-box
 
-    [SerializeField] private List<Level> Levels;
+    [SerializeField] private List<Level> Levels = new List<Level>();
     [SerializeField] private Level CurrentLevel; //set in Editor, Parent of all Platforms & Checkpoints
     private Transform LevelTransform;
     private Game_Manager GameManager;//set on initialize

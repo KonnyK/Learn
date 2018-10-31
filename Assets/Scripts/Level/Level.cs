@@ -6,7 +6,7 @@ using UnityEngine;
 public class Level
 {
 
-    [SerializeField] private List<Vector3> Path; //only Positions of Checkpoints
+    [SerializeField] private List<Vector3> Path = new List<Vector3>(); //only Positions of Checkpoints
     [SerializeField] private float LvlRotation = 0; //in degrees
     [SerializeField] int Design = 0; //determines which type of checkpoint and platform will be used
     [SerializeField] private int EnemyAmount; //first number is type, second is Amount

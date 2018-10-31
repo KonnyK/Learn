@@ -26,7 +26,6 @@ public class Enemy_Manager : NetworkBehaviour {
     [ClientRpc]
     private void RpcInitialize(string EnemyParentName)
     {
-        if (gameObject.name == Game_Manager.ServerGameManagerName) Enemy.SetGameManager(transform.GetComponent<Game_Manager>());
         EnemyParent = GameObject.Find(EnemyParentName).transform;
         LevelManager = gameObject.GetComponent<Game_Manager>().getLevelManager();
         SpawnPos = transform.position;

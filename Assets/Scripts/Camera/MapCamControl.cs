@@ -12,13 +12,13 @@ public class MapCamControl : MonoBehaviour //parent should be PlayerClient
     public void Initialize() //called by Levelmanager
     {
         transform.position = 100*Vector3.up;
-        GameManager = GameObject.Find(Game_Manager.ServerGameManagerName).GetComponent<Game_Manager>();
+        GameManager = transform.GetComponentInParent<Game_Manager>();
         currentControls = GameManager.getPlayerManager().getLocalPlayer().getControls();
     }
 
     void Update()
     {
-        if (GameManager.CanUpdate())
+        if (Game_Manager.UpdateAllowed)
         {
             if (Input.GetKeyDown(currentControls.getKey("Show Map")))
             {

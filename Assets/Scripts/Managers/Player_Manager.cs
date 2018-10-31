@@ -16,17 +16,17 @@ public class Player_Manager : NetworkBehaviour {
 
     public Player getLocalPlayer()
     {
-        foreach (Player P in Players) if (P.transform.GetComponentInParent<NetworkIdentity>().hasAuthority) return P;
+        foreach (Player P in Players) if (P.transform.GetComponent<NetworkIdentity>().hasAuthority) return P;
         return null;
     }
     
     public void RegisterNewPlayer(Player NewPlayer)
     {
         int Index = Players.Count;
-        uint NewPlayerNetID = NewPlayer.GetComponentInParent<NetworkIdentity>().netId.Value;
+        uint NewPlayerNetID = NewPlayer.GetComponent<NetworkIdentity>().netId.Value;
         for (int i = 0; i < Players.Count; i++)
         {
-            if (Players[i].GetComponentInParent<NetworkIdentity>().netId.Value > NewPlayerNetID)
+            if (Players[i].GetComponent<NetworkIdentity>().netId.Value > NewPlayerNetID)
             {
                 Index = i;
                 break;
