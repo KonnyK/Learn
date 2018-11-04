@@ -1,46 +1,51 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking;
 
-public class Enemy : NetworkBehaviour {
+public class Enemy : MonoBehaviour {
 
     private float MaxDistance = 10;
-    [SyncVar] private  Vector3 Spawn = Vector3.zero;
-    [SyncVar] private int Type = 0;
+    private Vector3 Spawn = Vector3.zero;
+    private int Type = 0;
+    public static Enemy_Manager EnemyManager;
 
     public new int GetType() { return Type; } //überschreibt alte GetType Funktion, daher "new"
-    [ClientRpc] public void RpcNewMaxDistance(float newMax) { MaxDistance = newMax; }
-
-    public void Initialize(int Type)
+    public void NewMaxDistance(float newMax) { MaxDistance = newMax; }
+    
+    public void SetValues(int Type, Vector3 Spawn)
     { //constructor
-        if (isServer)
-        {
-            this.Type = Type;
-            this.Spawn = transform.localPosition;
-        }
-        if (hasAuthority) CmdRespawn(); 
+        this.Type = Type;
+        this.Spawn = Spawn;
     }
 
-    [Command]
-    private void CmdRespawn()
+    public void ReActivate()
     {
         EnemyTypes.getType(Type).Animate(transform);
-        Rigidbody RB = transform.GetComponent<Rigidbody>();
-        RpcReAnimate(RB.velocity, RB.angularVelocity);
+
     }
-    [ClientRpc]
-    private void RpcReAnimate(Vector3 Vel, Vector3 AngVel)
+
+    private void GoBackToSpawn()
     {
+
+        Rigidbody RB = transform.GetComponent<Rigidbody>();
+        RB.velocity = Vector3.zero;
+        RB.angularVelocity = Vector3.zero;
         transform.position = Spawn;
+        transform.rotation = Quaternion.identity;
+    }
+
+    private void ReAnimate(Vector3 Pos, Vector3 Vel, Vector3 AngVel)
+    {
+        transform.position = Pos;
         transform.GetComponent<Rigidbody>().velocity = Vel;
         transform.GetComponent<Rigidbody>().angularVelocity = AngVel;
     }
 
     void FixedUpdate()
     {
-        if (Game_Manager.UpdateAllowed && Vector3.Magnitude(transform.localPosition - Spawn) > MaxDistance) //kills this Object if too far away and lets EnemyMAnager create a new one
+        if (Game_Manager.UpdateAllowed && Vector3.Magnitude(transform.localPosition - Spawn) > MaxDistance) //kills this Object if too far away and tell EnemyManager that ot died
         {
-                CmdRespawn();
+            GoBackToSpawn();
+            EnemyManager.EnemyDied(transform.GetSiblingIndex);
         }
     }
 

@@ -38,7 +38,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4917386468281114}
   - component: {fileID: 114044176141227284}
-  - component: {fileID: 114559492758894338}
   m_Layer: 11
   m_Name: Checkpoint
   m_TagString: CP
@@ -234,15 +233,3 @@ MonoBehaviour:
     i15: 146
   m_ServerOnly: 0
   m_LocalPlayerAuthority: 0
---- !u!114 &114559492758894338
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1267087756712248}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00e5d5246f5003c4fbd14dfe4d706b45, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  RealParentName: Level

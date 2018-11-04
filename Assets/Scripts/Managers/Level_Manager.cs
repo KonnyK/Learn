@@ -33,6 +33,7 @@ public class Level_Manager : NetworkBehaviour {
 
 
     //is only called from within "if (isServer)"
+    [Server]
     public void Initialize(string LevelTransformName) //has to be called at the start of the game
     {
         for (int i = -1; i < LevelAmount; i++) Levels.Add(BuildNewLevel());

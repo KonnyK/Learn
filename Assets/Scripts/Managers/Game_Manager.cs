@@ -62,6 +62,7 @@ public class Game_Manager : NetworkBehaviour {
         Debug.Log("PlayerManager: " + PlayerManager.transform.GetComponent<NetworkIdentity>().netId, this);
         Debug.Log("EnemyManager: " + EnemyManager.transform.GetComponent<NetworkIdentity>().netId, this);
 
+        PlayerManager.RegisterNewPlayer(transform.GetComponent<Player>());
         if (localPlayerAuthority)
         {
             transform.GetComponentInChildren<MapCamControl>().Initialize();
@@ -71,7 +72,7 @@ public class Game_Manager : NetworkBehaviour {
                 CmdAllowUpdate(true);
             }
         }
-        PlayerManager.RegisterNewPlayer(transform.GetComponentInChildren<Player>());
+        
     }
 
     [Command]

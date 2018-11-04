@@ -13,6 +13,7 @@ public class Enemy_Manager : NetworkBehaviour {
     private Transform EnemyParent;
 
     //is only called from within "if (isServer)"
+    [Server]
     public void Initialize(string EnemyParentName)
     {
         GameObject.Instantiate(new GameObject(EnemyParentName));
@@ -29,6 +30,7 @@ public class Enemy_Manager : NetworkBehaviour {
         EnemyParent = GameObject.Find(EnemyParentName).transform;
         LevelManager = gameObject.GetComponent<Game_Manager>().getLevelManager();
         SpawnPos = transform.position;
+        if (gameObject.name == Game_Manager.ServerGameManagerName) Enemy.EnemyManager = this;
     }
 
     public int EnemyAmount() { return transform.childCount; }
@@ -51,9 +53,20 @@ public class Enemy_Manager : NetworkBehaviour {
     public void RefreshMaxDistance()
     {
         MaxDistance = LevelManager.getLevelRadius();
-        foreach (Transform Child in transform) Child.GetComponent<Enemy>().RpcNewMaxDistance(MaxDistance);
+        foreach (Transform Child in EnemyParent) Child.GetComponent<Enemy>().NewMaxDistance(MaxDistance);
     }
     
+    [Client]
+    public void EnemyDied(int Index)
+    {
+        if (isServer)
+        {
+            EnemyParent.GetChild(Index).GetComponent<Enemy>().ReActivate();
+            Rigidbody RB = EnemyParent.GetChild(Index).GetComponent<Rigidbody>();
+            RpcReActivateEnemy(Index);
+        }
+    }
+
     public float getMaxDistance() { return LevelManager.getLevelRadius(); }
 
     public Vector3 getSpawn() { return SpawnPos; }

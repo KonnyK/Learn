@@ -20,6 +20,7 @@ public class Player_Manager : NetworkBehaviour {
         return null;
     }
     
+    [Client]
     public void RegisterNewPlayer(Player NewPlayer)
     {
         int Index = Players.Count;
@@ -33,6 +34,7 @@ public class Player_Manager : NetworkBehaviour {
             }
         }
         Players.Insert(Index, NewPlayer);
+        Debug.Log("Inserted Player at " +Index + ". PlayerCount:" + Players.Count,this);
         NewPlayer.CmdInitialize("Player", NewPlayerNetID);
     }
 
@@ -43,6 +45,36 @@ public class Player_Manager : NetworkBehaviour {
             P.CmdRespawn();
         }
     }
+/*
+    [SerializeField] private List<Player> Players = new List<Player>() { };
+    [SerializeField] private List<int> LocalPlayerIndexes = new List<int>() { };
 
+    public Player[] getLocalPlayers()
+    {
+        
+        Player[] Result = new Player[LocalPlayerIndexes.Count];
+        for (int i = 0; i < LocalPlayerIndexes.Count; i++) Result[i] = Players[LocalPlayerIndexes[i]];
+        return Result;
+        
 
+    }
+
+    public void RegisterNewPlayer(Player NewPlayer)
+{
+    int Index = Players.Count;
+    uint NewPlayerNetID = NewPlayer.GetComponent<NetworkIdentity>().netId.Value;
+    for (int i = 0; i < Players.Count; i++)
+    {
+        if (Players[i].GetComponent<NetworkIdentity>().netId.Value > NewPlayerNetID)
+        {
+            Index = i;
+            break;
+        }
+    }
+    Players.Insert(Index, NewPlayer);
+    //if (isLocal) LocalPlayerIndexes.Add(Index);
+    NewPlayer.CmdInitialize("Player", NewPlayerNetID);
+}
+
+*/
 }
