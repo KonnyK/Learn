@@ -24,6 +24,7 @@ public class Level
         return result;
     }
     public int getDesign() { return Design; }
+    public float getRotation() { return LvlRotation; }
     public Vector3 getFirstPos() { return LocalToGlobalRotation(Path[0]); }
     public Vector3 getLastPos() { return LocalToGlobalRotation(Path.Last()); }
     public int getEnemyAmount() { return this.EnemyAmount; }

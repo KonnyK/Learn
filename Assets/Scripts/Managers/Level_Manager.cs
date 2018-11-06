@@ -79,9 +79,12 @@ public class Level_Manager : NetworkBehaviour {
             for (int i = 0; i < Levels.Count; i++) if (Levels[i].Equals(CurrentLevel)) { Debug.Log("Found a similiar Level"); CurrentLvlNum = i; }
             CurrentLevel = Levels[CurrentLvlNum + 1];
         }
-        GameObject[] Designs = {Checkpoints[CurrentLevel.getDesign()], Checkpoints[CurrentLevel.getDesign()]};
+        GameObject[] Designs = {Checkpoints[CurrentLevel.getDesign()], Platforms[CurrentLevel.getDesign()]};
         CurrentLevel.Instantiate(LevelTransform, Designs);
-      
+        LevelTransform.rotation = Quaternion.identity;
+        LevelTransform.Rotate(Vector3.up,CurrentLevel.getRotation());
+
+
         RefreshLvlRadius(); //needed for MapCamera and EnemyMaxDistance
         GoalPosition = CurrentLevel.getLastPos();
         NetworkServer.Spawn(LevelTransform.gameObject);

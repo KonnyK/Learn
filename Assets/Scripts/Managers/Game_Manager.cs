@@ -58,10 +58,6 @@ public class Game_Manager : NetworkBehaviour {
             transform.GetComponent<Player_Manager>().enabled = false;
             transform.GetComponent<Enemy_Manager>().enabled = false;
         }
-        Debug.Log("LevelManager: " + LevelManager.transform.GetComponent<NetworkIdentity>().netId, this);
-        Debug.Log("PlayerManager: " + PlayerManager.transform.GetComponent<NetworkIdentity>().netId, this);
-        Debug.Log("EnemyManager: " + EnemyManager.transform.GetComponent<NetworkIdentity>().netId, this);
-
         PlayerManager.RegisterNewPlayer(transform.GetComponent<Player>());
         if (localPlayerAuthority)
         {
@@ -73,6 +69,10 @@ public class Game_Manager : NetworkBehaviour {
             }
         }
         
+        Debug.Log("New GameManager Done:  LevelManager: " + LevelManager.transform.GetComponent<NetworkIdentity>().netId + 
+                  "   PlayerManager: " + PlayerManager.transform.GetComponent<NetworkIdentity>().netId +
+                  "   EnemyManager: " + EnemyManager.transform.GetComponent<NetworkIdentity>().netId, this);
+
     }
 
     [Command]

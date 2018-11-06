@@ -137,7 +137,7 @@ public class Player : NetworkBehaviour
         {
             Debug.Log("Found new Spawn after " + TryAmount + " tries.");
             Debug.DrawLine(Vector3.zero, newPos, Color.red, 1000); // newfound SpawnPos
-            SpawnPos = newPos;
+            SpawnPos = newPos + Vector3.up * 5;
             return true;
         }
         else

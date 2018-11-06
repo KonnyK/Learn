@@ -33,7 +33,7 @@ public class Enemy : MonoBehaviour {
         transform.rotation = Quaternion.identity;
     }
 
-    private void ReAnimate(Vector3 Pos, Vector3 Vel, Vector3 AngVel)
+    public void ReAnimate(Vector3 Pos, Vector3 Vel, Vector3 AngVel)
     {
         transform.position = Pos;
         transform.GetComponent<Rigidbody>().velocity = Vel;
@@ -45,7 +45,7 @@ public class Enemy : MonoBehaviour {
         if (Game_Manager.UpdateAllowed && Vector3.Magnitude(transform.localPosition - Spawn) > MaxDistance) //kills this Object if too far away and tell EnemyManager that ot died
         {
             GoBackToSpawn();
-            EnemyManager.EnemyDied(transform.GetSiblingIndex);
+            EnemyManager.CmdEnemyDied(transform.GetSiblingIndex());
         }
     }
 
