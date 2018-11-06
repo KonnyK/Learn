@@ -25,7 +25,7 @@ public class PlayerCamControl: MonoBehaviour {
             if (Angle > 90) Angle = 90;
             if (Angle < 0) Angle = 0;
             transform.localPosition = Height * Vector3.up - Height / Mathf.Tan(Mathf.PI * Angle / 180f) * Vector3.forward;
-            transform.rotation = Quaternion.LookRotation(transform.parent.position - transform.position, Vector3.up);
+            transform.rotation = Quaternion.LookRotation(-transform.localPosition, Vector3.up);
         }
     }
 }

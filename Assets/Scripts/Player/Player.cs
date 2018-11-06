@@ -20,7 +20,8 @@ public class Player : NetworkBehaviour
     private readonly int RespawnTime = 3; //Time it will take for the Player to respawn once respawning was started
     [SerializeField] private uint Deathcount = 0; //how many times the Player died
 
-    [SerializeField] private Transform Mesh; //set in editor
+    [SerializeField] private GameObject PlayerModel; //set in Editor
+    private Transform Mesh;
 
 
     //Getters
@@ -43,7 +44,7 @@ public class Player : NetworkBehaviour
         P_Number = Number;
         P_Name = Name;
         gameObject.name = "Player" + P_Number;
-
+        Mesh = Instantiate(PlayerModel, transform).transform;
 
         //rename all Objects with the Playernumber at the end
         for (int i = 0; i < transform.childCount; i++) transform.GetChild(i).name += P_Number;
