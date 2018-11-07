@@ -7,6 +7,7 @@ public class Level_Manager : NetworkBehaviour {
 
     //read-only
     private static readonly Vector2 AngleRange = new Vector2(360/4, 360/12);
+    private static readonly string LevelTransformTag = "LvlTrans"; //if you change this, change the taglist in Unity too!!!
     [SerializeField] private GameObject[] Checkpoints; //array of all Checkpointprefabs Index=style
     [SerializeField] private GameObject[] Platforms; //array of all platform prefabs
     private static readonly float VoidWidth = 30; //distance between tthe paths and also Path width
@@ -26,7 +27,7 @@ public class Level_Manager : NetworkBehaviour {
 
     [SerializeField] private List<Level> Levels = new List<Level>();
     [SerializeField] private Level CurrentLevel; //set in Editor, Parent of all Platforms & Checkpoints
-    private Transform LevelTransform;
+    private Transform LevelTransform = null;
     private Game_Manager GameManager;//set on initialize
 
     public float getLevelRadius() { return CurrentLvlRadius; }
@@ -37,11 +38,14 @@ public class Level_Manager : NetworkBehaviour {
     public void Initialize(string LevelTransformName) //has to be called at the start of the game
     {
         for (int i = -1; i < LevelAmount; i++) Levels.Add(BuildNewLevel());
+
         GameObject.Instantiate(new GameObject(LevelTransformName));
         LevelTransform = GameObject.Find(LevelTransformName).transform;
         LevelTransform.gameObject.AddComponent<NetworkIdentity>();
         LevelTransform.gameObject.AddComponent<ObjectPoolManager>();
-        NetworkServer.Spawn(LevelTransform.gameObject);
+        LevelTransform.name = LevelTransformName;
+        LevelTransform.tag = LevelTransformTag;
+
         RpcInitialize(LevelTransformName);
     }
 
@@ -49,7 +53,7 @@ public class Level_Manager : NetworkBehaviour {
     private void RpcInitialize(string LevelTransformName)
     { 
         GameManager = gameObject.GetComponent<Game_Manager>();
-        LevelTransform = GameObject.Find(LevelTransformName).transform;
+        //LevelTransform = GameObject.Find(LevelTransformName).transform;
     }
 
     [Server]
@@ -65,10 +69,24 @@ public class Level_Manager : NetworkBehaviour {
                         );
     }
 
+    [ClientRpc]
+    private void RpcAssignLevelTransform(string Name)
+    {
+        if (isServer) foreach (GameObject GO in GameObject.FindGameObjectsWithTag(LevelTransformTag)) if (GO.name != Name) GameObject.Destroy(GO);
+        else LevelTransform = GameObject.Find(Name).transform;
+    }
+
+    [ClientRpc]
+    private void RpcForgetLevelTransform()
+    {
+        if (LevelTransform != null) GameObject.Destroy(LevelTransform.gameObject);
+        LevelTransform = null;
+    }
+
     [Command]
     public void CmdLoadNextLevel() //firstly called by Game_Manager
     { //creates as many GameObjects of type Checkpoint and Platform as saved in Level to load
-        Debug.Log("Loading next Level");
+        Debug.Log("Loading next Level", this);
 
         if (LevelTransform.childCount != 0) LevelTransform.GetComponent<ObjectPoolManager>().RpcClear();
 
@@ -87,9 +105,12 @@ public class Level_Manager : NetworkBehaviour {
 
         RefreshLvlRadius(); //needed for MapCamera and EnemyMaxDistance
         GoalPosition = CurrentLevel.getLastPos();
-        NetworkServer.Spawn(LevelTransform.gameObject);
 
-        GameManager.getEnemyManager().CmdSpawnEnemies(CurrentLevel.getDesign(), CurrentLevel.getEnemyAmount()); //spawn Enemies                   
+        RpcForgetLevelTransform();
+       // NetworkServer.Spawn(LevelTransform.gameObject);
+        RpcAssignLevelTransform(LevelTransform.name);
+
+        //GameManager.getEnemyManager().CmdSpawnEnemies(CurrentLevel.getDesign(), CurrentLevel.getEnemyAmount()); //spawn Enemies                   
         Debug.Log("Spawning Enemies: " + CurrentLevel.getDesign() + "," + CurrentLevel.getEnemyAmount());
     }
     

@@ -46,7 +46,7 @@ public class Game_Manager : NetworkBehaviour {
             if (isServer)
             {
                 LevelManager.Initialize("Level");
-                EnemyManager.Initialize("Enemies");
+                //EnemyManager.Initialize("Enemies");
             }
         } else
         {
@@ -58,10 +58,10 @@ public class Game_Manager : NetworkBehaviour {
             transform.GetComponent<Player_Manager>().enabled = false;
             transform.GetComponent<Enemy_Manager>().enabled = false;
         }
-        PlayerManager.RegisterNewPlayer(transform.GetComponent<Player>());
+        //PlayerManager.RegisterNewPlayer(transform.GetComponent<Player>());
         if (localPlayerAuthority)
         {
-            transform.GetComponentInChildren<MapCamControl>().Initialize();
+            //transform.GetComponentInChildren<MapCamControl>().Initialize();
             if (isServer)
             {
                 RpcPrepareNextLvl();
@@ -69,9 +69,9 @@ public class Game_Manager : NetworkBehaviour {
             }
         }
         
-        Debug.Log("New GameManager Done:  LevelManager: " + LevelManager.transform.GetComponent<NetworkIdentity>().netId + 
-                  "   PlayerManager: " + PlayerManager.transform.GetComponent<NetworkIdentity>().netId +
-                  "   EnemyManager: " + EnemyManager.transform.GetComponent<NetworkIdentity>().netId, this);
+        Debug.Log("New GameManager:  LM: " + LevelManager.transform.GetComponent<NetworkIdentity>().netId + 
+                  " PM: " + PlayerManager.transform.GetComponent<NetworkIdentity>().netId +
+                  " EM: " + EnemyManager.transform.GetComponent<NetworkIdentity>().netId, this);
 
     }
 
@@ -95,7 +95,7 @@ public class Game_Manager : NetworkBehaviour {
     private void RpcPrepareNextLvl()
     {
             Debug.Log("Preparing next lvl", this);
-            PlayerManager.RespawnAll();
+            //PlayerManager.RespawnAll();
         if (isServer) LevelManager.CmdLoadNextLevel();
     }
 }
