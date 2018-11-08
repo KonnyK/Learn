@@ -327,6 +327,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a3e8e21ac4c4bd849a9b219765fe88d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  LevelTransformObject: {fileID: 1634272085439488, guid: 6e882e10ce280964fac44394df865860,
+    type: 2}
   Checkpoints:
   - {fileID: 1267087756712248, guid: 6f21babffce60aa4a8844885b4200692, type: 2}
   Platforms:
@@ -337,6 +339,7 @@ MonoBehaviour:
   SpawnAreaPos: {x: 0, y: 0, z: 0}
   SpawnAreaSize: {x: 1, y: 1, z: 1}
   GoalPosition: {x: 0, y: 0, z: 0}
+  LevelTransform: {fileID: 0}
 --- !u!114 &114366109950561810
 MonoBehaviour:
   m_ObjectHideFlags: 1

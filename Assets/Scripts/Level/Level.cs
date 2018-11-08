@@ -24,7 +24,6 @@ public class Level
         return result;
     }
     public int getDesign() { return Design; }
-    public float getRotation() { return LvlRotation; }
     public Vector3 getFirstPos() { return LocalToGlobalRotation(Path[0]); }
     public Vector3 getLastPos() { return LocalToGlobalRotation(Path.Last()); }
     public int getEnemyAmount() { return this.EnemyAmount; }
@@ -63,6 +62,8 @@ public class Level
 
     public void Instantiate(Transform parent, GameObject[] Designs) //IMPORTANT: Scale of Platform has to be (1,1,1)
     {
+        parent.rotation = Quaternion.identity;
+        parent.Rotate(Vector3.up, LvlRotation);
 
         //Checkpoints
         foreach (Vector3 CP in Path)

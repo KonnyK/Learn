@@ -29,7 +29,7 @@ public class CollisionDetect : NetworkBehaviour {
                         if (GameManager.getLevelManager().IsInGoal(transform.position))
                         {
                             Debug.Log("Final Checkpoint!");
-                            GameManager.CmdPrepareNextLvl();
+                            GameManager.PrepareNextLvl();
                         }
                     }
                     else if (Hit.transform.gameObject.tag == "PF") player.CmdChangeStatus(1);

@@ -12,90 +12,100 @@ public class Game_Manager : NetworkBehaviour {
     private Level_Manager LevelManager;
     private Player_Manager PlayerManager;
     private Enemy_Manager EnemyManager;
-    private Game_Manager ServerManager; //used by not master only
-    
+    private static Game_Manager LocalManager = null;
+    private static uint MasterNetId = 0;
+
     public Level_Manager getLevelManager() { return LevelManager; }
     public Player_Manager getPlayerManager() { return PlayerManager; }
     public Enemy_Manager getEnemyManager() { return EnemyManager; }
 
-    [ClientRpc]
-    public void RpcRename(string newName)
+    [ClientRpc] private void RpcAllowUpdate(bool NewState) { UpdateAllowed = NewState; }
+    [Command] private void CmdAllowUpdate(bool NewState) { UpdateAllowed = NewState; }
+
+    public void AllowUpdate(bool NewState)
     {
-        gameObject.name = newName;
+        if (!(hasAuthority || isServer)) return;
+        UpdateAllowed = NewState;
+        if (isServer) RpcAllowUpdate(NewState);
+        else CmdAllowUpdate(NewState);
     }
+
+    [Command] void CmdFetchMasterNetId() { RpcSetMasterNetId(MasterNetId); }
+    [ClientRpc] void RpcSetMasterNetId(uint ID) { MasterNetId = ID; }
 
     public void Start()
     {
-        gameObject.name = NoAuthorityGameManagerName;
-        if (localPlayerAuthority)
-        {//making sure the server is called Server on every Client
-            if (isServer)
-            {
-                gameObject.name = ServerGameManagerName;
-                RpcRename(ServerGameManagerName);//maybe not needed
-            }
-            else gameObject.name = LocalAuthorityGameManagerName;
+        if (isLocalPlayer)
+        {
+            LocalManager = this;
+            if (isServer) MasterNetId = this.netId.Value;
+            else CmdFetchMasterNetId();
         }
 
-        if (gameObject.name == ServerGameManagerName)
-        {
-            ServerManager = null; //not "this" to avoid unseen endless loops with canupdate
-            LevelManager = transform.GetComponent<Level_Manager>();
-            PlayerManager = transform.GetComponent<Player_Manager>();
-            EnemyManager = transform.GetComponent<Enemy_Manager>();
-            if (isServer)
-            {
-                LevelManager.Initialize("Level");
-                //EnemyManager.Initialize("Enemies");
-            }
-        } else
-        {
-            ServerManager = GameObject.Find(ServerGameManagerName).GetComponent<Game_Manager>();
-            LevelManager = ServerManager.GetComponent<Level_Manager>();
-            PlayerManager = ServerManager.GetComponent<Player_Manager>();
-            EnemyManager = ServerManager.GetComponent<Enemy_Manager>();
-            transform.GetComponent<Level_Manager>().enabled = false;
-            transform.GetComponent<Player_Manager>().enabled = false;
-            transform.GetComponent<Enemy_Manager>().enabled = false;
+        if (LocalManager == null)
+        {//making sure Players executing Start() before the localauthority will retry refreshing their name after a localauthority is done
+            Invoke("Start", 1);
+            return;
         }
-        //PlayerManager.RegisterNewPlayer(transform.GetComponent<Player>());
-        if (localPlayerAuthority)
+        else
         {
+            //PlayerManager.RegisterNewPlayer(transform.GetComponent<Player>());
             //transform.GetComponentInChildren<MapCamControl>().Initialize();
-            if (isServer)
+            if (hasAuthority)
             {
-                RpcPrepareNextLvl();
-                CmdAllowUpdate(true);
+                LevelManager = transform.GetComponent<Level_Manager>();
+                PlayerManager = transform.GetComponent<Player_Manager>();
+                EnemyManager = transform.GetComponent<Enemy_Manager>();
+
+                if (isServer)
+                {
+                    Debug.Log("Authority On Server", this);
+                    gameObject.name = ServerGameManagerName;
+                    LevelManager.Initialize("Level");
+                    //EnemyManager.Initialize("Enemies");
+                    PrepareNextLvl();
+                }
+                else
+                {
+                    Debug.Log("Authority On Client", this);
+                    gameObject.name = LocalAuthorityGameManagerName;
+                }
+            }
+            else
+            {
+                LevelManager = LocalManager.GetComponent<Level_Manager>();
+                PlayerManager = LocalManager.GetComponent<Player_Manager>();
+                EnemyManager = LocalManager.GetComponent<Enemy_Manager>();
+                transform.GetComponent<Level_Manager>().enabled = false;
+                transform.GetComponent<Player_Manager>().enabled = false;
+                transform.GetComponent<Enemy_Manager>().enabled = false;
+
+                if (isServer)
+                {
+                    Debug.Log("No Authority On Server", this);
+                    gameObject.name = NoAuthorityGameManagerName;
+                }
+                else
+                {
+                    Debug.Log("No Authority On Client", this);
+                    if (this.netId.Value == MasterNetId) gameObject.name = ServerGameManagerName;
+                    else gameObject.name = NoAuthorityGameManagerName;
+                }
             }
         }
-        
-        Debug.Log("New GameManager:  LM: " + LevelManager.transform.GetComponent<NetworkIdentity>().netId + 
-                  " PM: " + PlayerManager.transform.GetComponent<NetworkIdentity>().netId +
-                  " EM: " + EnemyManager.transform.GetComponent<NetworkIdentity>().netId, this);
+    }                
 
-    }
-
-    [Command]
-    public void CmdAllowUpdate(bool NewState) { RpcSetAllowUpdate(NewState); }
-    [ClientRpc]
-    private void RpcSetAllowUpdate(bool NewState) { UpdateAllowed = NewState; }
-
-    [Command]
-    public void CmdPrepareNextLvl()
+    [Server]
+    public void PrepareNextLvl()
     {
-        if (gameObject.name == ServerGameManagerName)
+        if (hasAuthority)
         {
-            CmdAllowUpdate(false);
-            RpcPrepareNextLvl();
-            CmdAllowUpdate(true);
-        }
-        else ServerManager.CmdPrepareNextLvl();
-    }
-    [ClientRpc]
-    private void RpcPrepareNextLvl()
-    {
+            AllowUpdate(false);
             Debug.Log("Preparing next lvl", this);
             //PlayerManager.RespawnAll();
-        if (isServer) LevelManager.CmdLoadNextLevel();
+            if (isServer) LevelManager.CmdLoadNextLevel();
+            AllowUpdate(true);
+        }
+        else LocalManager.PrepareNextLvl();
     }
 }
