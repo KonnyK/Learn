@@ -22,7 +22,6 @@ GameObject:
   - component: {fileID: 33201937619793022}
   - component: {fileID: 65157507779059422}
   - component: {fileID: 23912667250810976}
-  - component: {fileID: 114862381989891454}
   m_Layer: 11
   m_Name: Platform
   m_TagString: PF
@@ -97,35 +96,3 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &114862381989891454
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1855795125151904}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 372142912, guid: dc443db3e92b4983b9738c1131f555cb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SceneId:
-    m_Value: 0
-  m_AssetId:
-    i0: 111
-    i1: 51
-    i2: 184
-    i3: 61
-    i4: 149
-    i5: 153
-    i6: 241
-    i7: 132
-    i8: 184
-    i9: 16
-    i10: 170
-    i11: 211
-    i12: 147
-    i13: 177
-    i14: 150
-    i15: 38
-  m_ServerOnly: 0
-  m_LocalPlayerAuthority: 0

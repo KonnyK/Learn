@@ -127,7 +127,7 @@ dfd33ff9ae3ce8d7ca1f22b475ec2387 UnityEngine.HoloLens.dll:UnityEngine.XR.WSA.Spa
 57912ed904bab12391f93374a5aaeea7 Assembly-CSharp.dll:.CollisionDetect
 f16835701e71dd5d6fb1fed4b7aff1d8 Unity.TextMeshPro.dll:TMPro.TMP_Asset
 486cd95c82d8305219c352c06b776e1f Unity.TextMeshPro.dll:TMPro.TMP_SpriteAnimator
-486cd95c82d8305219c352c06b776e1f Assembly-CSharp.dll:.ObjectPoolManager
+899416060501d5a3a9fd0e07c8a62c2c Assembly-CSharp.dll:.ObjectPoolManager
 167e9e848a5e485ff4ef84c59d24c2de Assembly-CSharp.dll:.Player
 486cd95c82d8305219c352c06b776e1f Assembly-CSharp.dll:.Enemy
 36b05ab49243a32d665569c4d4c9b670 Assembly-CSharp.dll:.Enemy_Manager
@@ -151,7 +151,7 @@ da21fc3f8056b1f91c3dd09c7bf4f90a UnityEngine.Networking.dll:UnityEngine.Networki
 fc061f3ae8a876c0687e86378d4a447c UnityEngine.Networking.dll:UnityEngine.Networking.NetworkTransformChild
 7ca56e063bd071986fff4f513cc4f477 UnityEngine.Networking.dll:UnityEngine.Networking.NetworkTransformVisualizer
 72a8523b432c0a5317826b7a9e0a0e79 Unity.TextMeshPro.dll:TMPro.PackageResourceImporterWindow
-34cf090eb1f4c293def11f9eccd2062a Assembly-CSharp.dll:.Level_Manager
+a6247738ad708a17d2a2827f50230c8a Assembly-CSharp.dll:.Level_Manager
 e53cc67d84060d628c7f03fc725766d8 Unity.TextMeshPro.dll:TMPro.TMP_FontAsset
 392c5b921098bd4c139d9146d0efa6d7 Unity.TextMeshPro.dll:TMPro.TMP_Settings
 486cd95c82d8305219c352c06b776e1f Assembly-CSharp.dll:.PlayerMenu

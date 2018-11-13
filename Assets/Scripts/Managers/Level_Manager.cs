@@ -5,52 +5,65 @@ using UnityEngine.Networking;
 
 public class Level_Manager : NetworkBehaviour {
 
-    //read-only
-    private static readonly Vector2 AngleRange = new Vector2(360 / 4, 360 / 12);
-    private static readonly string LevelTransformTag = "LvlTrans"; //if you change this, change the taglist in Unity too!!!
     [SerializeField] private GameObject LevelTransformObject; //set in editor
     [SerializeField] private GameObject[] Checkpoints; //array of all Checkpointprefabs Index=style
     [SerializeField] private GameObject[] Platforms; //array of all platform prefabs
+
+    private Game_Manager GameManager;//set on initialize
+
+    private static List<Level> Levels = new List<Level>();
+    private static Level CurrentLevel; //set in Editor, Parent of all Platforms & Checkpoints
+
+    [SerializeField] private uint LevelAmount = 20; //Amount of Levels generated on initialize
+    private static readonly Vector2 AngleRange = new Vector2(360 / 4, 360 / 12);
     private static readonly float VoidWidth = 30; //distance between tthe paths and also Path width
     private static readonly float MinRadius = 50; //minimal Radius so it doesn't get impossible hard, the last Checkpoint of a level has always this distance to the center
-    [SerializeField] private uint LevelAmount = 20; //Amount of Leveö´ls generated on initialize
 
+    private static Transform LevelTransform = null;
+    private static readonly string LevelTransformTag = "LvlTrans"; //if you change this, change the taglist in Unity too!!!
+    private static readonly string LevelTransformName = "Level";
+
+    private static int Difficulty = 0; //single increments by 1 or 2 won't do much
+    private static float CurrentLvlRadius = 0; //used for Enemy MaxDistance and MapCam
+    private static Vector3 SpawnAreaPos = Vector3.zero; //all lower coordinates of spawnarea-box
+    private static Vector3 SpawnAreaSize = Vector3.one; //width, height and depth of spawnarea-box
+    private static Vector3 GoalPosition = Vector3.zero; //width, height and depth of spawnarea-box
+
+
+    /// 
+    /// 
+    /// 
+    ///
+    ///
+
+
+
+    public Vector3[] GetSpawnArea() { return new Vector3[] { SpawnAreaPos, SpawnAreaSize }; } 
+    public float getLevelRadius() { return CurrentLvlRadius; }
     public GameObject GetCheckpointDesign(int DesignNum) { return Checkpoints[DesignNum]; }
     public GameObject GetPlatformDesign(int DesignNum) { return Platforms[DesignNum]; }
     public static float GetWidth() { return VoidWidth; }
     public static float GetMinRadius() { return MinRadius; }
 
-    [SerializeField, SyncVar] private int Difficulty = 0; //single increments by 1 or 2 won't do much
-    [SerializeField, SyncVar] private float CurrentLvlRadius = 0; //used for Enemy MaxDistance and MapCam
-    [SerializeField, SyncVar] private Vector3 SpawnAreaPos = Vector3.zero; //all lower coordinates of spawnarea-box
-    [SerializeField, SyncVar] private Vector3 SpawnAreaSize = Vector3.one; //width, height and depth of spawnarea-box
-    [SerializeField, SyncVar] private Vector3 GoalPosition = Vector3.zero; //width, height and depth of spawnarea-box
 
-    [SerializeField] private List<Level> Levels = new List<Level>();
-    [SerializeField] private Level CurrentLevel; //set in Editor, Parent of all Platforms & Checkpoints
-    [SerializeField] private Transform LevelTransform = null;
-    private Game_Manager GameManager;//set on initialize
-
-    public float getLevelRadius() { return CurrentLvlRadius; }
-
-
-    //is only called from within "if (isServer)"
-    [Server]
-    public void Initialize(string LevelTransformName) //has to be called at the start of the game
+    //called on (hasAuthority || isServer)
+    public void Initialize()
     {
-        for (int i = -1; i < LevelAmount; i++) Levels.Add(BuildNewLevel());
-
-        LevelTransform = Instantiate(LevelTransformObject).transform;
-        LevelTransform.tag = LevelTransformTag;
-        RpcInitialize(LevelTransformName);
-    }
-
-    [ClientRpc]
-    private void RpcInitialize(string LevelTransformName)
-    {
-        LevelTransform = GameObject.FindGameObjectWithTag(LevelTransformTag).transform;
-        LevelTransform.name = LevelTransformName;
         GameManager = gameObject.GetComponent<Game_Manager>();
+        if (hasAuthority)
+        {
+            if (isServer)
+            {
+                for (int i = -1; i < LevelAmount; i++) Levels.Add(BuildNewLevel());
+                LevelTransform = Instantiate(LevelTransformObject).transform;
+                LevelTransform.name = LevelTransformName;
+                LevelTransform.tag = LevelTransformTag;
+                NetworkServer.Spawn(LevelTransform.gameObject);
+                Debug.Log("Created LvLTrans: " + LevelTransform.GetComponent<NetworkIdentity>().netId.Value, this);
+                SyncValues();
+            }
+            else CmdRequestSyncValues();
+        }
     }
 
     [Server]
@@ -58,7 +71,7 @@ public class Level_Manager : NetworkBehaviour {
     {
         Difficulty += 10;
         System.Random R = new System.Random();
-        return new Level(    Difficulty + 10,
+        return new Level(Difficulty + 10,
                              R.Next(Math.Min(Checkpoints.Length, Platforms.Length) - 1),
                              Difficulty * 30 + 50,
                              AngleRange,
@@ -66,25 +79,11 @@ public class Level_Manager : NetworkBehaviour {
                         );
     }
 
-    
-    [ClientRpc]
-    private void RpcAssignLevelTransform(string Name)
-    {
-        foreach (GameObject GO in GameObject.FindGameObjectsWithTag(LevelTransformTag)) if (GO.name == Name) LevelTransform = GO.transform;
-        //else LevelTransform = GameObject.Find(Name).transform;
-    }
 
-    /*
-    [ClientRpc]
-    private void RpcForgetLevelTransform()
+    [Server]
+    public void LoadNextLevel()
     {
-        if (LevelTransform != null) GameObject.Destroy(LevelTransform.gameObject);
-        LevelTransform = null;
-    }
-    */
-    [Command]
-    public void CmdLoadNextLevel() //firstly called by Game_Manager
-    { //creates as many GameObjects of type Checkpoint and Platform as saved in Level to load
+        if (!hasAuthority) return;
         Debug.Log("Loading next Level", this);
 
         if (LevelTransform.childCount != 0) LevelTransform.GetComponent<ObjectPoolManager>().RpcClear();
@@ -96,25 +95,26 @@ public class Level_Manager : NetworkBehaviour {
             for (int i = 0; i < Levels.Count; i++) if (Levels[i].Equals(CurrentLevel)) { Debug.Log("Found a similiar Level"); CurrentLvlNum = i; }
             CurrentLevel = Levels[CurrentLvlNum + 1];
         }
-        NetworkServer.UnSpawn(LevelTransform.gameObject);
-        GameObject[] Designs = {Checkpoints[CurrentLevel.getDesign()], Platforms[CurrentLevel.getDesign()]};
-        CurrentLevel.Instantiate(LevelTransform, Designs);
-        
 
+        GameObject[] Designs = { Checkpoints[CurrentLevel.getDesign()], Platforms[CurrentLevel.getDesign()] };
+        CurrentLevel.Instantiate(LevelTransform, Designs);
+        LevelTransform.GetComponent<ObjectPoolManager>().OverwriteChildren(false);
 
         RefreshLvlRadius(); //needed for MapCamera and EnemyMaxDistance
         GoalPosition = CurrentLevel.getLastPos();
+        CalculateSpawnArea();
+        SyncValues();
+        
 
-        NetworkServer.Spawn(LevelTransform.gameObject);
-        RpcAssignLevelTransform(LevelTransform.name);
         //GameManager.getEnemyManager().CmdSpawnEnemies(CurrentLevel.getDesign(), CurrentLevel.getEnemyAmount()); //spawn Enemies                   
         Debug.Log("Spawning Enemies: " + CurrentLevel.getDesign() + "," + CurrentLevel.getEnemyAmount());
     }
-    
+
     //first Vector is position (lowest coordinate values) second is edge length of cube
-    [Command]
-    private void CmdCalculateSpawnArea()
+    [Server]
+    private void CalculateSpawnArea()
     {
+
         Vector3 Tolerance = Vector3.zero; //half the width of the spawnarea on each axis
 
         Tolerance.x = Tolerance.z = VoidWidth / 2;
@@ -123,7 +123,7 @@ public class Level_Manager : NetworkBehaviour {
         newPos =
             new Vector3(
                 Mathf.Min(CurrentLevel.getFirstPos().x + Tolerance.x, CurrentLevel.getFirstPos().x - Tolerance.x),
-                CurrentLevel.getFirstPos().y + Tolerance.y + GameManager.getPlayerManager().getLocalPlayer().transform.lossyScale.y / 2, //CP Position + half of CP height + half of Playermodel height
+                CurrentLevel.getFirstPos().y + Tolerance.y + 3,// GameManager.getPlayerManager().getLocalPlayer().transform.lossyScale.y / 2, //CP Position + half of CP height + half of Playermodel height
                 Mathf.Min(CurrentLevel.getFirstPos().z + Tolerance.z, CurrentLevel.getFirstPos().z - Tolerance.z));
         Vector3 newSize = Vector3.one;
         newSize = Tolerance * 2;
@@ -133,21 +133,45 @@ public class Level_Manager : NetworkBehaviour {
         SpawnAreaSize = newSize;
     }
 
-    public Vector3[] GetSpawnArea()
-    {
-        CmdCalculateSpawnArea();       
-        return new Vector3[] {SpawnAreaPos, SpawnAreaSize};
-    } 
 
     public bool IsInGoal(Vector3 Pos) //returns true when Pos is above the final checkpoint of a level
     {
         return (Vector3.Magnitude(Vector3.ProjectOnPlane(GoalPosition - Pos, Vector3.up)) <= VoidWidth/2); 
     }
 
+    [Server]
     private void RefreshLvlRadius() //called everytime a Lvl loads
-    { //recalculates the maxiumum distance from center any object could have in current level
-        if (!isServer) Debug.Log("Refreshing Lvl Radius on Client! This is not intended", this);
+    { //recalculates the maxiumum distance to center any object could have in current level
         CurrentLvlRadius = Vector3.Magnitude(CurrentLevel.getFirstPos()) //Distance of furthest Checkpoint
                            + Checkpoints[CurrentLevel.getDesign()].transform.lossyScale.x; //distance fromcenter of a checkpoint to a corner of the transform 
+    }
+
+    [Command]
+    private void CmdRequestSyncValues()//called when a new client connects
+    {
+        LevelTransform.GetComponent<ObjectPoolManager>().RpcRename(LevelTransformName, LevelTransformTag);
+        RpcSyncLevelValues(LevelTransform.GetComponent<NetworkIdentity>().netId.Value, CurrentLvlRadius, Difficulty, SpawnAreaPos, SpawnAreaSize, GoalPosition);
+        LevelTransform.GetComponent<ObjectPoolManager>().OverwriteChildren(false);
+    }
+    [Server] private void SyncValues()
+    {
+        LevelTransform.GetComponent<ObjectPoolManager>().RpcRename(LevelTransformName, LevelTransformTag);
+
+        foreach (GameObject Player in GameObject.FindGameObjectsWithTag("Player"))
+            Player.GetComponent<Level_Manager>().RpcSyncLevelValues(LevelTransform.GetComponent<NetworkIdentity>().netId.Value, CurrentLvlRadius, Difficulty, SpawnAreaPos, SpawnAreaSize, GoalPosition);
+    }
+    [ClientRpc] private void RpcSyncLevelValues(uint TransNetID, float LvlRadius, int Diff, Vector3 SpawnPos, Vector3 SpawnSize, Vector3 GoalPos)
+    {
+        if (isServer) return;
+        NetworkInstanceId NetID = new NetworkInstanceId(TransNetID);
+        Debug.Log("Trying to Find:" + NetID);
+        LevelTransform = NetworkServer.FindLocalObject(NetID).transform;
+        LevelTransform.name = LevelTransformName;
+        LevelTransform.tag = LevelTransformTag;
+        CurrentLvlRadius = LvlRadius;
+        Difficulty = Diff;
+        SpawnAreaPos = SpawnPos;
+        SpawnAreaSize = SpawnSize;
+        GoalPosition = GoalPos;
     }
 }

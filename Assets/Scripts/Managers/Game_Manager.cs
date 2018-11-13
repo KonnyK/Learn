@@ -33,79 +33,71 @@ public class Game_Manager : NetworkBehaviour {
     [Command] void CmdFetchMasterNetId() { RpcSetMasterNetId(MasterNetId); }
     [ClientRpc] void RpcSetMasterNetId(uint ID) { MasterNetId = ID; }
 
-    public void Start()
+    public override void OnStartClient()
     {
-        if (isLocalPlayer)
-        {
+        Debug.Log("GameManager started", this);
+        if (hasAuthority)
+        { 
             LocalManager = this;
             if (isServer) MasterNetId = this.netId.Value;
             else CmdFetchMasterNetId();
         }
-
         if (LocalManager == null)
         {//making sure Players executing Start() before the localauthority will retry refreshing their name after a localauthority is done
-            Invoke("Start", 1);
+            Invoke("OnStartClient", 1);
             return;
         }
-        else
+
+
+        //PlayerManager.RegisterNewPlayer(transform.GetComponent<Player>());
+        //transform.GetComponentInChildren<MapCamControl>().Initialize();
+        LevelManager = LocalManager.GetComponent<Level_Manager>();
+        PlayerManager = LocalManager.GetComponent<Player_Manager>();
+        EnemyManager = LocalManager.GetComponent<Enemy_Manager>();
+
+        FetchName();
+        if (hasAuthority)
         {
-            //PlayerManager.RegisterNewPlayer(transform.GetComponent<Player>());
-            //transform.GetComponentInChildren<MapCamControl>().Initialize();
-            if (hasAuthority)
-            {
-                LevelManager = transform.GetComponent<Level_Manager>();
-                PlayerManager = transform.GetComponent<Player_Manager>();
-                EnemyManager = transform.GetComponent<Enemy_Manager>();
-
-                if (isServer)
-                {
-                    Debug.Log("Authority On Server", this);
-                    gameObject.name = ServerGameManagerName;
-                    LevelManager.Initialize("Level");
-                    //EnemyManager.Initialize("Enemies");
-                    PrepareNextLvl();
-                }
-                else
-                {
-                    Debug.Log("Authority On Client", this);
-                    gameObject.name = LocalAuthorityGameManagerName;
-                }
-            }
-            else
-            {
-                LevelManager = LocalManager.GetComponent<Level_Manager>();
-                PlayerManager = LocalManager.GetComponent<Player_Manager>();
-                EnemyManager = LocalManager.GetComponent<Enemy_Manager>();
-                transform.GetComponent<Level_Manager>().enabled = false;
-                transform.GetComponent<Player_Manager>().enabled = false;
-                transform.GetComponent<Enemy_Manager>().enabled = false;
-
-                if (isServer)
-                {
-                    Debug.Log("No Authority On Server", this);
-                    gameObject.name = NoAuthorityGameManagerName;
-                }
-                else
-                {
-                    Debug.Log("No Authority On Client", this);
-                    if (this.netId.Value == MasterNetId) gameObject.name = ServerGameManagerName;
-                    else gameObject.name = NoAuthorityGameManagerName;
-                }
-            }
+            GetComponent<AudioListener>().enabled = true;
+            LevelManager.Initialize();
+            //EnemyManager.Initialize("Enemies");
+            //even if PrepLevel checks for Authority this check is needed as well so PrepLvl only gets called once  when the game starts
+            if (isServer) PrepareNextLvl();
         }
-    }                
+        else if (!isServer)
+        {
+            transform.GetComponent<Level_Manager>().enabled = false;
+            transform.GetComponent<Player_Manager>().enabled = false;
+            transform.GetComponent<Enemy_Manager>().enabled = false;
+        }
+    }
 
     [Server]
     public void PrepareNextLvl()
     {
+        AllowUpdate(false);
+        Debug.Log("Preparing next lvl", this);
+        //PlayerManager.RespawnAll();
+        LevelManager.LoadNextLevel();
+        AllowUpdate(true);
+    }
+
+    private void FetchName()
+    {
         if (hasAuthority)
         {
-            AllowUpdate(false);
-            Debug.Log("Preparing next lvl", this);
-            //PlayerManager.RespawnAll();
-            if (isServer) LevelManager.CmdLoadNextLevel();
-            AllowUpdate(true);
+            if (isServer) gameObject.name = ServerGameManagerName; //Authority , Server
+            else gameObject.name = LocalAuthorityGameManagerName; //Authority , Client
         }
-        else LocalManager.PrepareNextLvl();
+        else
+        {
+            if (isServer) gameObject.name = NoAuthorityGameManagerName; //No Authority , Server
+            else
+            {
+                //No Authority , Client
+                if (this.netId.Value == MasterNetId) gameObject.name = ServerGameManagerName;
+                else gameObject.name = NoAuthorityGameManagerName;
+            }
+        }
     }
 }

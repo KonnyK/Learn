@@ -84,7 +84,7 @@ GameObject:
   - component: {fileID: 114399108952777158}
   m_Layer: 0
   m_Name: PlayerClient
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -287,7 +287,7 @@ AudioListener:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1970313724849114}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!114 &114003514106380166
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -334,12 +334,6 @@ MonoBehaviour:
   Platforms:
   - {fileID: 1855795125151904, guid: 6f33b83d9599f184b810aad393b19626, type: 2}
   LevelAmount: 20
-  Difficulty: 0
-  CurrentLvlRadius: 0
-  SpawnAreaPos: {x: 0, y: 0, z: 0}
-  SpawnAreaSize: {x: 1, y: 1, z: 1}
-  GoalPosition: {x: 0, y: 0, z: 0}
-  LevelTransform: {fileID: 0}
 --- !u!114 &114366109950561810
 MonoBehaviour:
   m_ObjectHideFlags: 1

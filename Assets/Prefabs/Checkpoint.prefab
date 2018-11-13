@@ -37,7 +37,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4917386468281114}
-  - component: {fileID: 114044176141227284}
   m_Layer: 11
   m_Name: Checkpoint
   m_TagString: CP
@@ -201,35 +200,3 @@ MeshCollider:
   m_CookingOptions: 14
   m_SkinWidth: 0.01
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &114044176141227284
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1267087756712248}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 372142912, guid: dc443db3e92b4983b9738c1131f555cb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SceneId:
-    m_Value: 0
-  m_AssetId:
-    i0: 111
-    i1: 33
-    i2: 186
-    i3: 191
-    i4: 252
-    i5: 230
-    i6: 10
-    i7: 164
-    i8: 168
-    i9: 132
-    i10: 72
-    i11: 133
-    i12: 180
-    i13: 32
-    i14: 6
-    i15: 146
-  m_ServerOnly: 0
-  m_LocalPlayerAuthority: 0
