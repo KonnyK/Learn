@@ -42,7 +42,7 @@ public class Game_Manager : NetworkBehaviour {
             if (isServer) MasterNetId = this.netId.Value;
             else CmdFetchMasterNetId();
         }
-        if (LocalManager == null)
+        else if (LocalManager == null)
         {//making sure Players executing Start() before the localauthority will retry refreshing their name after a localauthority is done
             Invoke("OnStartClient", 1);
             return;
@@ -60,7 +60,7 @@ public class Game_Manager : NetworkBehaviour {
         {
             GetComponent<AudioListener>().enabled = true;
             LevelManager.Initialize();
-            //EnemyManager.Initialize("Enemies");
+            EnemyManager.Initialize();
             //even if PrepLevel checks for Authority this check is needed as well so PrepLvl only gets called once  when the game starts
             if (isServer) PrepareNextLvl();
         }

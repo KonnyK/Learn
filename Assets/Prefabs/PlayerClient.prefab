@@ -356,9 +356,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8d09c38760c1874584c8018a3fd530e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultEnemy: {fileID: 1836379006976266, guid: 0fd797c9b04b2cd4684502fff7a905b6,
+  EnemyDesigns:
+  - {fileID: 1836379006976266, guid: 0fd797c9b04b2cd4684502fff7a905b6, type: 2}
+  EnemyParentObject: {fileID: 1634272085439488, guid: 6e882e10ce280964fac44394df865860,
     type: 2}
-  MaxDistance: 100
 --- !u!114 &114535732837598522
 MonoBehaviour:
   m_ObjectHideFlags: 1

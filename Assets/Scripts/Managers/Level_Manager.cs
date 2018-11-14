@@ -8,8 +8,7 @@ public class Level_Manager : NetworkBehaviour {
     [SerializeField] private GameObject LevelTransformObject; //set in editor
     [SerializeField] private GameObject[] Checkpoints; //array of all Checkpointprefabs Index=style
     [SerializeField] private GameObject[] Platforms; //array of all platform prefabs
-
-    private Game_Manager GameManager;//set on initialize
+    private Enemy_Manager EnemyManager;//set on initialize
 
     private static List<Level> Levels = new List<Level>();
     private static Level CurrentLevel; //set in Editor, Parent of all Platforms & Checkpoints
@@ -20,7 +19,7 @@ public class Level_Manager : NetworkBehaviour {
     private static readonly float MinRadius = 50; //minimal Radius so it doesn't get impossible hard, the last Checkpoint of a level has always this distance to the center
 
     private static Transform LevelTransform = null;
-    private static readonly string LevelTransformTag = "LvlTrans"; //if you change this, change the taglist in Unity too!!!
+    private readonly string LevelTransformTag = "LvlTrans"; //if you change this, change the taglist in Unity too!!!
     private static readonly string LevelTransformName = "Level";
 
     private static int Difficulty = 0; //single increments by 1 or 2 won't do much
@@ -49,7 +48,7 @@ public class Level_Manager : NetworkBehaviour {
     //called on (hasAuthority || isServer)
     public void Initialize()
     {
-        GameManager = gameObject.GetComponent<Game_Manager>();
+        EnemyManager = gameObject.GetComponent<Game_Manager>().getEnemyManager();
         if (hasAuthority)
         {
             if (isServer)
@@ -98,7 +97,7 @@ public class Level_Manager : NetworkBehaviour {
 
         GameObject[] Designs = { Checkpoints[CurrentLevel.getDesign()], Platforms[CurrentLevel.getDesign()] };
         CurrentLevel.Instantiate(LevelTransform, Designs);
-        LevelTransform.GetComponent<ObjectPoolManager>().OverwriteChildren(false);
+        LevelTransform.GetComponent<ObjectPoolManager>().OverwriteChildren();
 
         RefreshLvlRadius(); //needed for MapCamera and EnemyMaxDistance
         GoalPosition = CurrentLevel.getLastPos();
@@ -106,7 +105,7 @@ public class Level_Manager : NetworkBehaviour {
         SyncValues();
         
 
-        //GameManager.getEnemyManager().CmdSpawnEnemies(CurrentLevel.getDesign(), CurrentLevel.getEnemyAmount()); //spawn Enemies                   
+        EnemyManager.SpawnEnemies(CurrentLevel.getDesign(), CurrentLevel.getEnemyAmount()); //spawn Enemies                   
         Debug.Log("Spawning Enemies: " + CurrentLevel.getDesign() + "," + CurrentLevel.getEnemyAmount());
     }
 
@@ -150,22 +149,20 @@ public class Level_Manager : NetworkBehaviour {
     private void CmdRequestSyncValues()//called when a new client connects
     {
         LevelTransform.GetComponent<ObjectPoolManager>().RpcRename(LevelTransformName, LevelTransformTag);
-        RpcSyncLevelValues(LevelTransform.GetComponent<NetworkIdentity>().netId.Value, CurrentLvlRadius, Difficulty, SpawnAreaPos, SpawnAreaSize, GoalPosition);
-        LevelTransform.GetComponent<ObjectPoolManager>().OverwriteChildren(false);
+        RpcSyncLevelValues(CurrentLvlRadius, Difficulty, SpawnAreaPos, SpawnAreaSize, GoalPosition);
+        LevelTransform.GetComponent<ObjectPoolManager>().OverwriteChildren();
     }
     [Server] private void SyncValues()
     {
         LevelTransform.GetComponent<ObjectPoolManager>().RpcRename(LevelTransformName, LevelTransformTag);
 
         foreach (GameObject Player in GameObject.FindGameObjectsWithTag("Player"))
-            Player.GetComponent<Level_Manager>().RpcSyncLevelValues(LevelTransform.GetComponent<NetworkIdentity>().netId.Value, CurrentLvlRadius, Difficulty, SpawnAreaPos, SpawnAreaSize, GoalPosition);
+            Player.GetComponent<Level_Manager>().RpcSyncLevelValues(CurrentLvlRadius, Difficulty, SpawnAreaPos, SpawnAreaSize, GoalPosition);
     }
-    [ClientRpc] private void RpcSyncLevelValues(uint TransNetID, float LvlRadius, int Diff, Vector3 SpawnPos, Vector3 SpawnSize, Vector3 GoalPos)
+    [ClientRpc] private void RpcSyncLevelValues(float LvlRadius, int Diff, Vector3 SpawnPos, Vector3 SpawnSize, Vector3 GoalPos)
     {
         if (isServer) return;
-        NetworkInstanceId NetID = new NetworkInstanceId(TransNetID);
-        Debug.Log("Trying to Find:" + NetID);
-        LevelTransform = NetworkServer.FindLocalObject(NetID).transform;
+        foreach (GameObject GO in GameObject.FindGameObjectsWithTag(LevelTransformTag)) if (GO.name == LevelTransformName) LevelTransform = GO.transform;
         LevelTransform.name = LevelTransformName;
         LevelTransform.tag = LevelTransformTag;
         CurrentLvlRadius = LvlRadius;

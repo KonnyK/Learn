@@ -8,18 +8,14 @@ public class ObjectPoolManager : NetworkBehaviour {
     [SerializeField] GameObject[] Types; //set in Editor
 
     [ClientRpc] public void RpcClear(){ ClearChildren(); }
-    [ClientRpc] private void RpcAddChild(Vector3 Pos, Quaternion Rot, Vector3 Scale, Vector3 Vel, int Type)
+    [ClientRpc] private void RpcAddChild(Vector3 Pos, Quaternion Rot, Vector3 Scale, int Type)
     {
         Transform Child = Instantiate(Types[Type], transform).transform;
         Child.position = Pos;
         Child.rotation = Rot;
         Child.localScale = Scale;
-        if (Vel != Vector3.zero)
-        {
-            Child.GetComponent<Rigidbody>().velocity = Vel;
-        }
     }
-    [Server] public void OverwriteChildren(bool kinematic)
+    [Server] public void OverwriteChildren()
     {
         RpcClear();
         foreach (Transform Child in transform)
@@ -43,8 +39,7 @@ public class ObjectPoolManager : NetworkBehaviour {
                         break;
                     }
             }
-            if (!kinematic) RpcAddChild(Child.position, Child.rotation, Child.localScale, Vector3.zero, Type);
-            else RpcAddChild(Child.position, Child.rotation, Child.localScale, Child.GetComponent<Rigidbody>().velocity, Type);
+            RpcAddChild(Child.position, Child.rotation, Child.localScale, Type);
         }
     }
 	private void ClearChildren()

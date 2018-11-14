@@ -4,12 +4,11 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - Button
   - CP
   - PF
-  - Undefined
   - Enemy
   - LvlTrans
+  - EnemyParent
   layers:
   - Default
   - TransparentFX
