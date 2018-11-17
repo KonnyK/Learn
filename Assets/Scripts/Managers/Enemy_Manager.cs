@@ -28,32 +28,43 @@ public class Enemy_Manager : NetworkBehaviour {
 
     public void Initialize()  
     {
+        LevelManager = gameObject.GetComponent<Game_Manager>().getLevelManager();
         if (hasAuthority)
         {
-            LevelManager = transform.GetComponent<Level_Manager>();
             if (isServer)
             {
                 EnemyParent = Instantiate(EnemyParentObject).transform;
                 EnemyParent.name = EnemyParentName;
                 EnemyParent.tag = EnemyParent.tag;
-                NetworkServer.Spawn(EnemyParent.gameObject);
+                NetworkServer.SpawnWithClientAuthority(EnemyParent.gameObject, this.gameObject);
                 SyncValues();
             }
             else CmdRequestSyncValues();
         }
     }
 
-    [Command] private void CmdRequestSyncValues() { SyncValues(); }
+    [Command]
+    private void CmdRequestSyncValues()
+    {
+        EnemyParent.GetComponent<ObjectPoolManager>().RpcRename(EnemyParentName, EnemyParentTag);
+        RpcSyncValues(SpawnPos, MaxDistance);
+        EnemyParent.GetComponent<ObjectPoolManager>().OverwriteChildren();
+
+    }
     [Server] private void SyncValues()
     {
         MaxDistance = LevelManager.getLevelRadius();
-        foreach (GameObject Player in GameObject.FindGameObjectsWithTag("Player")) Player.GetComponent<Enemy_Manager>().RpcSyncValues(SpawnPos, MaxDistance);
+        EnemyParent.GetComponent<ObjectPoolManager>().RpcRename(EnemyParentName, EnemyParentTag);
+        foreach (GameObject Player in GameObject.FindGameObjectsWithTag("Player"))
+            Player.GetComponent<Enemy_Manager>().RpcSyncValues(SpawnPos, MaxDistance);
     }
     [ClientRpc] public void RpcSyncValues(Vector3 Spawn, float MaxDist)
     {
+        if (isServer) return;
+        foreach (GameObject GO in GameObject.FindGameObjectsWithTag(EnemyParentTag))
+            if (GO.name == EnemyParentName) EnemyParent = GO.transform;
         SpawnPos = Spawn;
         MaxDistance = MaxDist;
-        foreach (GameObject GO in GameObject.FindGameObjectsWithTag(EnemyParentTag)) if (GO.name == EnemyParentName) EnemyParent = GO.transform;
     }
 
     [Server]
@@ -75,7 +86,7 @@ public class Enemy_Manager : NetworkBehaviour {
     {
         EnemyParent.GetChild(Index).GetComponent<Enemy>().ReActivate();
         Rigidbody RB = EnemyParent.GetChild(Index).GetComponent<Rigidbody>();
-        //RpcReActivateEnemy(Index, RB.transform.position, RB.velocity, RB.angularVelocity);
+        RpcReActivateEnemy(Index, RB.transform.position, RB.velocity, RB.angularVelocity);
     }
 
     [ClientRpc]

@@ -26,6 +26,7 @@ public class Enemy : MonoBehaviour {
 
     void FixedUpdate()
     {
+        if (transform.childCount == 1) Debug.Log(GetComponent<Rigidbody>().velocity);
         if (EnemyManager == null) return;
         if (Game_Manager.UpdateAllowed && Vector3.Magnitude(transform.localPosition - Enemy_Manager.getSpawn()) > Enemy_Manager.getMaxDistance()) //kills this Object if too far away and tell EnemyManager that ot died
         {

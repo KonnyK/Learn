@@ -15,6 +15,7 @@ public class ObjectPoolManager : NetworkBehaviour {
         Child.rotation = Rot;
         Child.localScale = Scale;
     }
+
     [Server] public void OverwriteChildren()
     {
         RpcClear();

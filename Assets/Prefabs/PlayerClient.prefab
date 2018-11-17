@@ -358,7 +358,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EnemyDesigns:
   - {fileID: 1836379006976266, guid: 0fd797c9b04b2cd4684502fff7a905b6, type: 2}
-  EnemyParentObject: {fileID: 1634272085439488, guid: 6e882e10ce280964fac44394df865860,
+  EnemyParentObject: {fileID: 1634272085439488, guid: c022c39f4e92e07428e9ccf19dfc79f9,
     type: 2}
 --- !u!114 &114535732837598522
 MonoBehaviour:

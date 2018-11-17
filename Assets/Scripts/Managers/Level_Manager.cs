@@ -163,8 +163,6 @@ public class Level_Manager : NetworkBehaviour {
     {
         if (isServer) return;
         foreach (GameObject GO in GameObject.FindGameObjectsWithTag(LevelTransformTag)) if (GO.name == LevelTransformName) LevelTransform = GO.transform;
-        LevelTransform.name = LevelTransformName;
-        LevelTransform.tag = LevelTransformTag;
         CurrentLvlRadius = LvlRadius;
         Difficulty = Diff;
         SpawnAreaPos = SpawnPos;
