@@ -36,7 +36,7 @@ public class Enemy_Manager : NetworkBehaviour {
                 EnemyParent = Instantiate(EnemyParentObject).transform;
                 EnemyParent.name = EnemyParentName;
                 EnemyParent.tag = EnemyParent.tag;
-                NetworkServer.SpawnWithClientAuthority(EnemyParent.gameObject, this.gameObject);
+                NetworkServer.Spawn(EnemyParent.gameObject);
                 SyncValues();
             }
             else CmdRequestSyncValues();
@@ -73,14 +73,19 @@ public class Enemy_Manager : NetworkBehaviour {
         EnemyParent.GetComponent<ObjectPoolManager>().RpcClear();
         if (Amount > 0) for (int i = 0; i < Amount; i++)
             {
-                Instantiate(EnemyDesigns[Type], EnemyParent).GetComponent<Enemy>().SetType(Type, this); //change the values of the new object;
+                RpcAddEnemyComponent(Instantiate(EnemyDesigns[Type], EnemyParent).transform.GetSiblingIndex(), Type);
             }
         EnemyParent.GetComponent<ObjectPoolManager>().OverwriteChildren();
         SyncValues();
-        foreach (GameObject Player in GameObject.FindGameObjectsWithTag("Player"))
-        foreach (Transform Enemy in EnemyParent) Player.GetComponent<Enemy_Manager>().EnemyDied(Enemy.GetSiblingIndex());
     }
 
+    [ClientRpc]
+    private void RpcAddEnemyComponent(int SiblingIndex, int Type)
+    {
+        Enemy E = EnemyParent.gameObject.AddComponent<Enemy>();
+        E.Initialize(SiblingIndex, Type);
+    }
+    /*
     [Server]
     public void EnemyDied(int Index)
     {
@@ -97,6 +102,6 @@ public class Enemy_Manager : NetworkBehaviour {
         RB.velocity = Vel;
         RB.angularVelocity = AngVel;
     }
-
+    */
 
 }
