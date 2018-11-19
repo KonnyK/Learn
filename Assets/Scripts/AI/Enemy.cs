@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
 
-public class Enemy : NetworkBehaviour {
-
+private class Enemy {
+    /*
     private float[] RValues = new float[2];
-    private Transform MeshObject;
+    private int Index;
     [SyncVar] private int MeshObjectIndex = 0;
     [SyncVar] private int Type = 0;
 
@@ -25,7 +25,6 @@ public class Enemy : NetworkBehaviour {
     private void RpcDelete()
     {
         Destroy(transform.GetChild(MeshObjectIndex).gameObject);
-        Destroy(this);
     }
 
     [Server]
@@ -60,7 +59,7 @@ public class Enemy : NetworkBehaviour {
         MeshObject.rotation = Quaternion.identity;
         GetComponent<Rigidbody>().angularVelocity = RValues[0] * Vector3.up;
     }
-
+    */
     /*
     private Enemy_Manager EnemyManager = null; //Server only
 

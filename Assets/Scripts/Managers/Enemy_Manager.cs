@@ -6,6 +6,26 @@ using UnityEngine.Networking;
 
 public class Enemy_Manager : NetworkBehaviour {
 
+    private class Enemy
+    {
+
+        private float[] RValues = new float[2];
+        private int Index;
+        private int Type = 0;
+
+        public int getIndex() { return Index; }
+        public int getType() { return Type; }
+        public float[] getSpecs() { return RValues; }
+
+        public Enemy(int SiblingIndex, int Type, float[] Specs)
+        {
+            Index = SiblingIndex;
+            this.Type = Type;
+            RValues = Specs;
+        }
+
+    }
+
     [SerializeField] private GameObject[] EnemyDesigns; //set in Prefab
     private static Level_Manager LevelManager;
 
@@ -13,6 +33,7 @@ public class Enemy_Manager : NetworkBehaviour {
     private static float MaxDistance = 100;
 
     private static Transform EnemyParent;
+    private static List<Enemy> Enemies = new List<Enemy>();
     private static readonly string EnemyParentName = "Enemies";
     private readonly string EnemyParentTag = "EnemyParent";
     [SerializeField] private GameObject EnemyParentObject; //set in prefab
@@ -73,18 +94,43 @@ public class Enemy_Manager : NetworkBehaviour {
         EnemyParent.GetComponent<ObjectPoolManager>().RpcClear();
         if (Amount > 0) for (int i = 0; i < Amount; i++)
             {
-                RpcAddEnemyComponent(Instantiate(EnemyDesigns[Type], EnemyParent).transform.GetSiblingIndex(), Type);
+                int Index = Instantiate(EnemyDesigns[Type], EnemyParent).transform.GetSiblingIndex();
+                float[] Randoms = { Random.value, Random.value };
+                Enemies.Add(new Enemy(Index, Type, Randoms));
+                RpcAddEnemy(Index, Type, Randoms[0], Randoms[1]);
             }
         EnemyParent.GetComponent<ObjectPoolManager>().OverwriteChildren();
+        foreach (GameObject Player in GameObject.FindGameObjectsWithTag("Player")) Player.GetComponent<Enemy_Manager>().RpcAnimateAll();
         SyncValues();
     }
 
-    [ClientRpc]
-    private void RpcAddEnemyComponent(int SiblingIndex, int Type)
+    [ClientRpc] public void RpcAnimateAll() { foreach (Enemy E in Enemies) Animate(E); }
+
+    [ClientRpc] private void RpcAddEnemy(int SiblingIndex, int Type, float R1, float R2)
     {
-        Enemy E = EnemyParent.gameObject.AddComponent<Enemy>();
-        E.Initialize(SiblingIndex, Type);
+        float[] RValues = { R1, R2 };
+        Enemies.Add(new Enemy(SiblingIndex, Type, RValues));
     }
+
+    [Client] private void Animate(Enemy E)
+    {
+        Rigidbody RB = EnemyParent.GetChild(E.getIndex()).GetComponent<Rigidbody>();
+        RB.velocity = EnemyTypes.GetMoving[E.getType()](EnemyParent.GetChild(E.getIndex()), E.getSpecs());
+        RB.angularVelocity = E.getSpecs()[0] * Vector3.up;
+    }
+
+    [Client] public void FixedUpdate()
+    {
+
+        foreach (Enemy E in Enemies) if (Vector3.Magnitude(EnemyParent.GetChild(E.getIndex()).position - SpawnPos) > MaxDistance)
+            {
+                Transform T = EnemyParent.GetChild(E.getIndex());
+                T.position = SpawnPos;
+                T.rotation = Quaternion.identity;
+                Animate(E);
+            }
+    }
+
     /*
     [Server]
     public void EnemyDied(int Index)
