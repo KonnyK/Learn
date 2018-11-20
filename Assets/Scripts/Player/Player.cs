@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class Player : NetworkBehaviour
+public class Player : MonoBehaviour
 {
 
     [SerializeField] private string P_Name;
@@ -32,28 +32,9 @@ public class Player : NetworkBehaviour
     public string GetName() { return P_Name; }
     public Controls getControls() { return P_Controls; }
 
-    [ClientRpc]
-    private void RpcInitialize(string Name, int Number)
-    {
-        if (!hasAuthority && !isServer)
-        {
-            transform.GetComponent<CollisionDetect>().enabled = false;
-            transform.GetComponent<Movement>().enabled = false;
-        }
-        else transform.GetComponent<CollisionDetect>().Initialize();
-        P_Number = Number;
-        P_Name = Name;
-        gameObject.name = "Player" + P_Number;
-        Mesh = Instantiate(PlayerModel, transform).transform;
+    public void SetMesh(Transform Mesh) { this.Mesh = Mesh; }
 
-        //rename all Objects with the Playernumber at the end
-        for (int i = 0; i < transform.childCount; i++) transform.GetChild(i).name += P_Number;
-        //Initialize Children
-        transform.GetComponentInChildren<PlayerCamControl>().Initialize(this);
-    }
-
-    [Command]
-    public void CmdInitialize(string Name, uint Number)
+    public void Initialize(string Name, uint Number)
     {
         int Num = checked((int)Number); //checked returns overflow error if uint > int.maxvalue
         RpcInitialize(Name, Num);

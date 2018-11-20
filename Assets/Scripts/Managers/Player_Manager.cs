@@ -5,7 +5,30 @@ using UnityEngine.Networking;
 
 public class Player_Manager : NetworkBehaviour {
 
-    [SerializeField] private List<Player> Players = new List<Player>() { };
+    private static List<Player> Players = new List<Player>() { };
+
+    [Server] public void Initialize()
+    {
+        foreach 
+    }
+    [ClientRpc] private void RpcInitialize(string Name, int Number)
+    {
+        if (!hasAuthority && !isServer)
+        {
+            transform.GetComponent<CollisionDetect>().enabled = false;
+            transform.GetComponent<Movement>().enabled = false;
+        }
+        else transform.GetComponent<CollisionDetect>().Initialize();
+        P_Number = Number;
+        P_Name = Name;
+        gameObject.name = "Player" + P_Number;
+        Mesh = Instantiate(PlayerModel, transform).transform;
+
+        //rename all Objects with the Playernumber at the end
+        for (int i = 0; i < transform.childCount; i++) transform.GetChild(i).name += P_Number;
+        //Initialize Children
+        transform.GetComponentInChildren<PlayerCamControl>().Initialize(this);
+    }
 
     public Controls getLocalControls()
     {

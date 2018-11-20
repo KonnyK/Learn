@@ -70,9 +70,9 @@ public class Level_Manager : NetworkBehaviour {
     {
         Difficulty += 10;
         System.Random R = new System.Random();
-        return new Level(Difficulty*10 + 10,
+        return new Level(5 * Difficulty,
                              R.Next(Math.Min(Checkpoints.Length, Platforms.Length) - 1),
-                             Difficulty * 30 + 50,
+                             Difficulty * 10 + 50,
                              AngleRange,
                              (R.Next(1) == 0)
                         );
