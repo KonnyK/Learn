@@ -119,9 +119,10 @@ public class Enemy_Manager : NetworkBehaviour {
         RB.angularVelocity = E.getSpecs()[0] * Vector3.up;
     }
 
-    [Client] public void FixedUpdate()
+    public void FixedUpdate()
     {
-
+        if ((Enemies.Count < 1) || !hasAuthority) return;
+        Debug.Log("Running Enemy Update");
         foreach (Enemy E in Enemies) if (Vector3.Magnitude(EnemyParent.GetChild(E.getIndex()).position - SpawnPos) > MaxDistance)
             {
                 Transform T = EnemyParent.GetChild(E.getIndex());

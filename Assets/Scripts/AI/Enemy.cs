@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Networking;
 
-private class Enemy {
+public class Enemie {
     /*
     private float[] RValues = new float[2];
     private int Index;

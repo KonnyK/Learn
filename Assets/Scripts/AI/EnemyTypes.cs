@@ -9,9 +9,9 @@ public class EnemyTypes {
     {
         new Func((Entity,Specs) =>
         {
-            float BaseSpeed = 5;
+            float BaseSpeed = 20;
             float SpeedTolerance = (Specs[1] * 2 - 1) * 0.25f;
-            return new Vector3(Mathf.Cos(Specs[0]*2), 0,Mathf.Sin(Specs[0]*2)).normalized * (BaseSpeed + SpeedTolerance);
+            return new Vector3(Mathf.Cos(Mathf.PI*(Specs[0]*2-1)), 0,Mathf.Sin(Mathf.PI*(Specs[0]*2-1))).normalized * (BaseSpeed + SpeedTolerance);
             /*
             Vector3 Vel = (0.25f + 0.125f * Random.value) * Vector3.Normalize(new Vector3(2 * Random.value - 1, 0, 2 * Random.value - 1));
             Debug.Log("New VEL:" + Vel);

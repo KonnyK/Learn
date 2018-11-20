@@ -7,9 +7,10 @@ public class ObjectPoolManager : NetworkBehaviour {
 
     [SerializeField] GameObject[] Types; //set in Editor
 
-    [ClientRpc] public void RpcClear(){ ClearChildren(); }
+    [ClientRpc] public void RpcClear(){ if (!isServer) ClearChildren(); }
     [ClientRpc] private void RpcAddChild(Vector3 Pos, Quaternion Rot, Vector3 Scale, int Type)
     {
+        if (isServer) return;
         Transform Child = Instantiate(Types[Type], transform).transform;
         Child.position = Pos;
         Child.rotation = Rot;

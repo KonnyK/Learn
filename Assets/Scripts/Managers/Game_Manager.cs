@@ -35,7 +35,6 @@ public class Game_Manager : NetworkBehaviour {
 
     public override void OnStartClient()
     {
-        Debug.Log("GameManager started", this);
         if (hasAuthority)
         { 
             LocalManager = this;
