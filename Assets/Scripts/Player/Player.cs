@@ -6,7 +6,6 @@ using UnityEngine.Networking;
 public class Player : MonoBehaviour
 {
 
-    [SerializeField] private string P_Name;
     [SerializeField] private int P_Number;//PlayerNumber
 
     [SerializeField] private int P_Status = 0; //used to check wether player is alive, dead, invincible, etc.
@@ -48,22 +47,6 @@ public class Player : MonoBehaviour
         if (hasAuthority) CmdSyncTransforms(transform.position, transform.rotation, Mesh.forward);
     }
 
-    [Command]
-    private void CmdSyncTransforms(Vector3 Pos, Quaternion Rot, Vector3 Facing)
-    {
-        RpcSyncTransforms(Pos, Rot, Facing);
-    }
-    [ClientRpc]
-    private void RpcSyncTransforms(Vector3 Pos, Quaternion Rot, Vector3 Facing)
-    {
-        if (!hasAuthority)
-        {
-            transform.position = Pos;
-            transform.rotation = Rot;
-            OrientateMesh(Facing, Vector3.up);
-        }
-    }
-
     //Stamina management
     public bool ConsumeStamina(float Amount)
     {
@@ -75,8 +58,6 @@ public class Player : MonoBehaviour
         if (SP + Amount <= MaxSP) { SP += Amount; return true; }
         else return false;
     }
-
-
 
     //turns PlayerModel
     public void OrientateMesh(Vector3 Forward, Vector3 Up)
@@ -179,39 +160,6 @@ public class Player : MonoBehaviour
         }
     }
 
-    [Command]
-    public void CmdKill() { RpcKill(); }
-    [ClientRpc]
-    private void RpcKill()
-    {
-        Debug.Log("Player died!");
-        Deathcount++;
-        CmdChangeStatus(-1);
-        Mesh.rotation = Quaternion.LookRotation(Vector3.up);
-    }
-
-    //usually called (from outside) this delays the Respawn
-    //runs only on 1 Client!!!!!
-    [Command]
-    public void CmdRequestRespawn()
-    {
-        RpcChangeStatus(-2);
-        Invoke("RpcRespawn", RespawnTime);
-    }
-
-    //internally called and  exceptionally for instant (re)spawning
-    [Command]
-    public void CmdRespawn() { RpcRespawn(); }
-    [ClientRpc]
-    private void RpcRespawn()
-    {
-        if (FindNewSpawn())
-        {
-            transform.localPosition = SpawnPos;
-            Mesh.rotation = Quaternion.LookRotation(new Vector3(2 * UnityEngine.Random.value - 1, 0, 2 * UnityEngine.Random.value - 1), Vector3.up); ;
-            CmdChangeStatus(2);
-            SP = MaxSP;
-        }
-    }
+   
 
 }

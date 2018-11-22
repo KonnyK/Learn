@@ -122,7 +122,7 @@ public class Level_Manager : NetworkBehaviour {
         newPos =
             new Vector3(
                 Mathf.Min(CurrentLevel.getFirstPos().x + Tolerance.x, CurrentLevel.getFirstPos().x - Tolerance.x),
-                CurrentLevel.getFirstPos().y + Tolerance.y + 3,// GameManager.getPlayerManager().getLocalPlayer().transform.lossyScale.y / 2, //CP Position + half of CP height + half of Playermodel height
+                CurrentLevel.getFirstPos().y + Tolerance.y + 3,
                 Mathf.Min(CurrentLevel.getFirstPos().z + Tolerance.z, CurrentLevel.getFirstPos().z - Tolerance.z));
         Vector3 newSize = Vector3.one;
         newSize = Tolerance * 2;

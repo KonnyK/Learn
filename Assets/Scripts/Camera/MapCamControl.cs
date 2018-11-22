@@ -9,14 +9,11 @@ public class MapCamControl : MonoBehaviour //parent should be PlayerClient
     private Game_Manager GameManager;
 
 
-    public void Initialize() //called by Levelmanager
+    public void Initialize(Controls Con) //called by Levelmanager
     {
         transform.position = 100*Vector3.up;
         GameManager = transform.GetComponentInParent<Game_Manager>();
-        currentControls = GameManager.
-            getPlayerManager().
-            getLocalPlayer().
-            getControls();
+        currentControls = Con;
     }
 
     void Update()

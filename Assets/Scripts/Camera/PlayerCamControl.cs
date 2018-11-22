@@ -9,9 +9,9 @@ public class PlayerCamControl: MonoBehaviour {
     [SerializeField] private float Angle = 60f;
 
 
-    public void Initialize(Player Owner) //called by Player
+    public void Initialize(Controls Con) //called by Player
     {
-        currentControls = Owner.getControls();
+        currentControls = Con;
     }
 
     void Update () {
