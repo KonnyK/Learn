@@ -63,7 +63,6 @@ public class Level
     public void Instantiate(Transform parent, GameObject[] Designs) //IMPORTANT: Scale of Platform has to be (1,1,1)
     {
         parent.rotation = Quaternion.identity;
-        parent.Rotate(Vector3.up, LvlRotation);
 
         //Checkpoints
         foreach (Vector3 CP in Path)
@@ -86,6 +85,8 @@ public class Level
             parent.GetChild(parent.childCount - 1).transform.localScale =
                 new Vector3(Level_Manager.GetWidth(), CurrentScale.y, Vector3.Magnitude(Path[i] - Path[i - 1])); //changing scale
         }
+
+        parent.Rotate(Vector3.up, LvlRotation);
     }
 }
 

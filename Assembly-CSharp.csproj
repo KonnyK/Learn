@@ -61,7 +61,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\AI\Enemy.cs" />
     <Compile Include="Assets\Scripts\AI\EnemyTypes.cs" />
     <Compile Include="Assets\Scripts\Camera\MapCamControl.cs" />
     <Compile Include="Assets\Scripts\Camera\PlayerCamControl.cs" />

@@ -3,118 +3,61 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class Player : MonoBehaviour
+public class Player : NetworkBehaviour
 {
-
-    [SerializeField] private int P_Number;//PlayerNumber
-
-    [SerializeField] private int P_Status = 0; //used to check wether player is alive, dead, invincible, etc.
-    [SerializeField] private Controls P_Controls = new Controls(); //contains KeyCodes
-
-    [SerializeField] private float SP; //Stamina
-    [SerializeField] private float MaxSP = 100;
-    [SerializeField] private bool Invincible; //used for Checkpoints
-
-    [SerializeField] private Vector3 SpawnPos; //Spawnpoint
-    private readonly int RespawnTime = 3; //Time it will take for the Player to respawn once respawning was started
-    [SerializeField] private uint Deathcount = 0; //how many times the Player died
-
-    [SerializeField] private GameObject PlayerModel; //set in Editor
-    private Transform Mesh;
-
-
-    //Getters
-    public uint getDeathcount() { return Deathcount; }
-    public bool isAlive() { return (P_Status > 0); }
-    public bool isInvincible() { return Invincible; }
+    [SyncVar] private int P_Number;
     public int PlayerNumber() { return P_Number; }
-    public string GetName() { return P_Name; }
+
+    [SyncVar] private int P_Status = 0; //used to check wether player is alive, dead, invincible, etc.
+    public bool isAlive() { return (P_Status > 0); }
+    [SyncVar] private bool Invincible; //used for Checkpoints
+    public bool isInvincible() { return Invincible; }
+
+    [SyncVar] private uint Deathcount = 0;
+    public uint getDeathcount() { return Deathcount; }
+    public void IncDeathCount() { Deathcount++; }
+
+    [SerializeField] private Controls P_Controls = new Controls(); //contains KeyCodes
     public Controls getControls() { return P_Controls; }
 
-    public void SetMesh(Transform Mesh) { this.Mesh = Mesh; }
+    public Transform Mesh;
+    [Command] public void CmdOrientateMesh(Vector3 Dir, Vector3 up) { RpcOrientateMesh(Mesh.position, Quaternion.LookRotation(Dir, up)); }
+    [ClientRpc] public void RpcOrientateMesh(Vector3 Pos, Quaternion Rot) { if (hasAuthority) { Mesh.position = Pos; Mesh.rotation = Rot; } }
+    [ClientRpc] private void RpcShowMesh(bool MeshActive) { if (hasAuthority) Mesh.gameObject.SetActive(MeshActive); }
+    private Rigidbody MeshRB = null;
+    public Rigidbody getRB() { return MeshRB; }
 
-    public void Initialize(string Name, uint Number)
+    public void SetMesh(Transform NewMesh) 
     {
-        int Num = checked((int)Number); //checked returns overflow error if uint > int.maxvalue
-        RpcInitialize(Name, Num);
+        Mesh = NewMesh;
+        Mesh.name = "Mesh" + P_Number;
+        MeshRB = Mesh.GetComponent<Rigidbody>();
     }
 
-    [Client]
-    private void FixedUpdate()
+    public void SetNewControls()
     {
-        if (isAlive() & Game_Manager.UpdateAllowed) RecoverStamina(1);
-        //else transform.Find("Info" + P_Number).GetComponent<PlayerFeed>().DeathMessage(Time.time - TimeofDeath, transform.parent.name);
-        if (hasAuthority) CmdSyncTransforms(transform.position, transform.rotation, Mesh.forward);
+        GetComponent<Movement>().Initialize();
+        Mesh.parent.GetComponentInChildren<PlayerCamControl>().SetKeyCode(P_Controls.getKey("Show Map"));
     }
 
-    //Stamina management
-    public bool ConsumeStamina(float Amount)
+    [ClientRpc] public void RpcSetNumber(int Num)
     {
-        if (SP >= Amount) { SP -= Amount; return true; }
-        else return false;
-    }
-    public bool RecoverStamina(float Amount)
-    {
-        if (SP + Amount <= MaxSP) { SP += Amount; return true; }
-        else return false;
+        if (isServer) P_Number = Num;
+        gameObject.name = "Player" + P_Number;
+        foreach (Transform Child in transform) Child.name += P_Number;
     }
 
-    //turns PlayerModel
-    public void OrientateMesh(Vector3 Forward, Vector3 Up)
+
+    [Command] public void CmdSetNewCourse(Vector3 Pos, Vector3 Vel) { RpcSetNewCourse(Pos, Vel); }
+    [Client] private void RpcSetNewCourse(Vector3 Pos, Vector3 Vel)
     {
-        if (Vector3.Magnitude(Forward) >= 0.05f) Mesh.rotation = Quaternion.LookRotation(Forward, Up);
-    }
-    //activates/deactivates Playermodel
-    public void ShowMesh(bool MeshActive) { Mesh.gameObject.SetActive(MeshActive); }
-
-    //randomly choose a new Spawnlocation and check if Spawning is safe
-    public bool FindNewSpawn()
-    {
-        Level_Manager LevelManager = transform.GetComponent<Game_Manager>().getLevelManager();
-        RaycastHit Hit;
-        Vector3 newPos = Vector3.zero;
-
-        //draw Debug Box
-        Vector3 V0 = LevelManager.GetSpawnArea()[0];
-        Vector3 V1 = V0 + LevelManager.GetSpawnArea()[1];
-        Debug.DrawLine(new Vector3(V0.x, V1.y, V1.z), V1, Color.green, 1000);//Possible SpawnArea
-        Debug.DrawLine(new Vector3(V1.x, V1.y, V0.z), V1, Color.green, 1000);
-        Debug.DrawLine(new Vector3(V0.x, V0.y, V1.z), V0, Color.green, 1000);
-        Debug.DrawLine(new Vector3(V1.x, V0.y, V0.z), V0, Color.green, 1000);
-
-
-        int MaxTries = 100; //after more tries to find a spawn it stops searching
-        int TryAmount = 0;
-
-        do
-        {
-            //randomly generating Position
-            newPos = LevelManager.GetSpawnArea()[0];
-            newPos.x += UnityEngine.Random.value * (LevelManager.GetSpawnArea()[1].x);
-            newPos.y += UnityEngine.Random.value * (LevelManager.GetSpawnArea()[1].y);
-            newPos.z += UnityEngine.Random.value * (LevelManager.GetSpawnArea()[1].z);
-            TryAmount++;
-
-        } while ((!Physics.Raycast(newPos, Vector3.down, out Hit) || Hit.transform.tag != "CP") && TryAmount <= MaxTries);
-        if (TryAmount <= MaxTries)
-        {
-            Debug.Log("Found new Spawn after " + TryAmount + " tries.");
-            Debug.DrawLine(Vector3.zero, newPos, Color.red, 1000); // newfound SpawnPos
-            SpawnPos = newPos + Vector3.up * 5;
-            return true;
-        }
-        else
-        {
-            Debug.Log("No Spawn Found");
-            return false;
-        }
+        if (!hasAuthority) return;
+        Mesh.position = Pos;
+        MeshRB.velocity = Vel;
+        Mesh.rotation = Quaternion.LookRotation(MeshRB.velocity, Vector3.up);
     }
 
-    //switch-case for P_Status
-    [Command]
-    public void CmdChangeStatus(int newStatus) { RpcChangeStatus(newStatus); }
-    [ClientRpc]
-    private void RpcChangeStatus(int newStatus)
+    [Server] public void ChangeStatus(int newStatus)
     ///Status:
     /// -2: dead, invisible, no collision, invincible, no gravity        (respawning)
     /// -1: dead, visible, no collision, invincible, gravity             (not respawning)
@@ -122,7 +65,7 @@ public class Player : MonoBehaviour
     ///  1: alive, visible, collision, vincible, gravity                 (on Platform)
     ///  2: alive, visible, collision, invincible, gravity               (on Checkpoint)
     {
-        Rigidbody RB = transform.GetComponent<Rigidbody>();
+        Debug.Log("Changing Status to:" + newStatus, this);
         if (newStatus >= -2 && 2 >= newStatus)
         {
             P_Status = newStatus;
@@ -130,36 +73,35 @@ public class Player : MonoBehaviour
             {
                 case -2:
                     {
-                        RB.velocity = Vector3.zero;
-                        ShowMesh(false); RB.isKinematic = true; Invincible = true; RB.useGravity = false;
+                        MeshRB.velocity = Vector3.zero;
+                        RpcShowMesh(false); MeshRB.isKinematic = true; Invincible = true; MeshRB.useGravity = false;
                     }
                     break;
                 case -1:
                     {
-                        RB.velocity = Vector3.zero;
-                        ShowMesh(true); RB.isKinematic = true; Invincible = true; RB.useGravity = true;
+                        MeshRB.velocity = Vector3.zero;
+                        RpcShowMesh(true); MeshRB.isKinematic = true; Invincible = true; MeshRB.useGravity = true;
                     }
                     break;
                 case 0:
                     {
-                        RB.velocity = Vector3.zero;
-                        ShowMesh(false); RB.isKinematic = true; Invincible = true; RB.useGravity = false;
+                        MeshRB.velocity = Vector3.zero;
+                        RpcShowMesh(false); MeshRB.isKinematic = true; Invincible = true; MeshRB.useGravity = false;
                     }
                     break;
                 case 1:
                     {
-                        ShowMesh(true); RB.isKinematic = false; Invincible = false; RB.useGravity = true;
+                        RpcShowMesh(true); MeshRB.isKinematic = false; Invincible = false; MeshRB.useGravity = true;
                     }
                     break;
                 case 2:
                     {
-                        ShowMesh(true); RB.isKinematic = false; Invincible = true; RB.useGravity = true;
+                        RpcShowMesh(true); MeshRB.isKinematic = false; Invincible = true; MeshRB.useGravity = true;
                     }
                     break;
             }
         }
     }
 
-   
-
 }
+

@@ -113,23 +113,18 @@ public class Level_Manager : NetworkBehaviour {
     [Server]
     private void CalculateSpawnArea()
     {
-
+       // Debug.Log("CalculateNewSpawn", this);
         Vector3 Tolerance = Vector3.zero; //half the width of the spawnarea on each axis
 
         Tolerance.x = Tolerance.z = VoidWidth / 2;
         Tolerance.y = Checkpoints[CurrentLevel.getDesign()].transform.lossyScale.y;
-        Vector3 newPos = Vector3.zero;
-        newPos =
-            new Vector3(
-                Mathf.Min(CurrentLevel.getFirstPos().x + Tolerance.x, CurrentLevel.getFirstPos().x - Tolerance.x),
-                CurrentLevel.getFirstPos().y + Tolerance.y + 3,
-                Mathf.Min(CurrentLevel.getFirstPos().z + Tolerance.z, CurrentLevel.getFirstPos().z - Tolerance.z));
-        Vector3 newSize = Vector3.one;
-        newSize = Tolerance * 2;
+        Vector3 newPos = Vector3.Min(CurrentLevel.getFirstPos() + Tolerance, CurrentLevel.getFirstPos() - Tolerance);
+        Vector3 newSize = Tolerance * 2;
 
         Debug.DrawLine(Vector3.zero, CurrentLevel.getFirstPos(), Color.white, 1000); //Position  of the Checkpoint everything is based on
         SpawnAreaPos = newPos;
         SpawnAreaSize = newSize;
+
     }
 
 

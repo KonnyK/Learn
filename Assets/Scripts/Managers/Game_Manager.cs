@@ -55,6 +55,8 @@ public class Game_Manager : NetworkBehaviour {
         EnemyManager = LocalManager.GetComponent<Enemy_Manager>();
 
         FetchName();
+
+        PlayerManager.Initialize();
         if (hasAuthority)
         {
             GetComponent<AudioListener>().enabled = true;
@@ -76,8 +78,8 @@ public class Game_Manager : NetworkBehaviour {
     {
         AllowUpdate(false);
         Debug.Log("Preparing next lvl", this);
-        //PlayerManager.RespawnAll();
         LevelManager.LoadNextLevel();
+        PlayerManager.RespawnAll();
         AllowUpdate(true);
     }
 

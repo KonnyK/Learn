@@ -54,8 +54,11 @@ public class ObjectPoolManager : NetworkBehaviour {
         else RpcAddChild(Child.position, Child.rotation, Child.localScale, Type, Vector3.zero, Vector3.zero);
     }
 
+    [ClientRpc] private void RpcReRotate(Quaternion Rot) { if (!isServer) transform.rotation = Rot; }
+
     [Server] public void OverwriteChildren()
     {
+        RpcReRotate(transform.rotation);
         RpcClear();
         foreach (Transform Child in transform) OverwriteChild(Child.GetSiblingIndex());
     }

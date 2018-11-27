@@ -9,6 +9,8 @@ TagManager:
   - Enemy
   - LvlTrans
   - EnemyParent
+  - PlayerPool
+  - Mesh
   layers:
   - Default
   - TransparentFX

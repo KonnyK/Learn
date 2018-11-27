@@ -9,15 +9,25 @@ public class Movement : MonoBehaviour {
     private Vector3 TargetPos;
     [SerializeField] private Transform TargetMarker; //set in Editor
     [SerializeField] private Player myPlayer; //set in Editor
-    [SerializeField] private Rigidbody RB; //set in Editor
+    private Rigidbody RB;
+    private Transform Mesh;
     [SerializeField] private Camera PlayerCam; //set in, you guessed it, Editor
-    private bool TargetCancelled = false; //used to prevent Target from being used again instatntly eventhough it was cancelled
+    [SerializeField] private Controls currentControls;
+    private bool TargetCancelled = false; //used to prevent Target from being used again instatntly eventhough it was cancelled (holding both mouse buttons)
+
+    public void Initialize()
+    {
+        RB = myPlayer.getRB();
+        Mesh = myPlayer.Mesh;
+        PlayerCam = myPlayer.Mesh.parent.GetComponentInChildren<PlayerCamControl>().GetComponent<Camera>();
+        currentControls = myPlayer.getControls();
+    }
 
     public void ClearTarget()
     {
         TargetMarker.gameObject.SetActive(false);
-        TargetMarker.position = transform.position;
-        TargetPos = transform.position;
+        TargetMarker.position = Mesh.position;
+        TargetPos = Mesh.position;
     }
 
     private void FixedUpdate()
@@ -48,9 +58,9 @@ public class Movement : MonoBehaviour {
 
             Vector3 NewDirection = Vector3.zero;
             //Moving with Mouse
-            if (TargetMarker.gameObject.activeSelf) if (Vector3.Magnitude(TargetPos - transform.position) > TargetMarker.lossyScale.x)
+            if (TargetMarker.gameObject.activeSelf) if (Vector3.Magnitude(TargetPos - Mesh.position) > TargetMarker.lossyScale.x)
                 {
-                    NewDirection = Vector3.Normalize(Vector3.ProjectOnPlane(TargetPos - transform.position, Vector3.up));
+                    NewDirection = Vector3.Normalize(Vector3.ProjectOnPlane(TargetPos - Mesh.position, Vector3.up));
                 }
                 else
                 {
@@ -60,13 +70,13 @@ public class Movement : MonoBehaviour {
             TargetMarker.position = TargetPos; //stopping TargetMarker from moving with its parent
 
             //Moving with WASD
-            Vector2 Dir = myPlayer.getControls().getDir();
+            Vector2 Dir = currentControls.getDir();
             NewDirection = Vector3.Normalize(NewDirection + Vector3.Normalize(new Vector3(Dir.x, 0, Dir.y)));
 
             RB.AddForce(Acceleration * NewDirection, ForceMode.Impulse);
 
             //Stop Movement on Stop Key
-            if (Input.GetKey(myPlayer.getControls().getKey("Stop")))
+            if (Input.GetKey(currentControls.getKey("Stop")))
             {
                 ClearTarget();
                 RB.velocity = Vector3.zero;
@@ -75,7 +85,7 @@ public class Movement : MonoBehaviour {
 
 
             //Player tries to move away from activeTarget with WASD
-            if (TargetMarker.gameObject.activeSelf & Mathf.Abs(Vector3.Angle(new Vector3(Dir.x, 0, Dir.y), TargetPos - transform.position)) >= 145)
+            if (TargetMarker.gameObject.activeSelf & Mathf.Abs(Vector3.Angle(new Vector3(Dir.x, 0, Dir.y), TargetPos - Mesh.position)) >= 145)
             {
                 ClearTarget();
                 TargetCancelled = true;
@@ -84,15 +94,13 @@ public class Movement : MonoBehaviour {
             //check wether Player is somehow too fast
             if (RB.velocity.magnitude > MaxSpeed) RB.velocity = Vector3.ClampMagnitude(RB.velocity, MaxSpeed);
 
-            //Rotate Mesh
-            myPlayer.OrientateMesh(new Vector3(RB.velocity.x, 0, RB.velocity.z), Vector3.up);
-
-            myPlayer.getControls().DecreaseMovement(false); //slowly decreases the Axis in Controls script
+            currentControls.DecreaseMovement(false); //slowly decreases the Axis in Controls script
+            myPlayer.CmdSetNewCourse(Mesh.position, RB.velocity);
         }
 
         else //when Player is dead or Update is not allowed
         {
-            myPlayer.getControls().DecreaseMovement(true); //resets Axis to 0;
+            currentControls.DecreaseMovement(true); //resets Axis to 0;
             ClearTarget(); //clear Target if dead
         }
     }

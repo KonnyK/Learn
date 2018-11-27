@@ -1,44 +1,47 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking;
 
-public class CollisionDetect : NetworkBehaviour {
+public class CollisionDetect : MonoBehaviour {
 
-    [SerializeField] private Player player; //set in Editor
+    private Player myPlayer;
+    private Transform Mesh;
+    private Player_Manager PlayerManager;
     private Game_Manager GameManager;
 
-    [Client]
-    public void Initialize()
+    public void Initialize(Transform T)
     {
-        GameManager = transform.GetComponent<Game_Manager>();
+        GameManager = T.GetComponent<Game_Manager>();
+        PlayerManager = T.GetComponent<Player_Manager>();
+        myPlayer = T.GetComponent<Player>();
+        Mesh = myPlayer.getRB().transform;
     }
 
     void Update()
     {
-        if (Game_Manager.UpdateAllowed && hasAuthority)
+        if (Game_Manager.UpdateAllowed)
         {
             RaycastHit Hit;
-            if (player.isAlive()) if (Physics.Raycast(transform.position, Vector3.down, out Hit))
+            if (myPlayer.isAlive()) if (Physics.Raycast(Mesh.position, Vector3.down, out Hit))
                 {
                     //handles Invincibility if Alive and something is below
                     if (Hit.transform.gameObject.tag == "CP")
                     {
-                        player.CmdChangeStatus(2);
+                        myPlayer.ChangeStatus(2);
                         //Loading next Level if its  the last Checkpoint
-                        if (GameManager.getLevelManager().IsInGoal(transform.position))
+                        if (GameManager.getLevelManager().IsInGoal(Mesh.position))
                         {
                             Debug.Log("Final Checkpoint!");
                             GameManager.PrepareNextLvl();
                         }
                     }
-                    else if (Hit.transform.gameObject.tag == "PF") player.CmdChangeStatus(1);
+                    else if (Hit.transform.gameObject.tag == "PF") myPlayer.ChangeStatus(1);
                 }
                 else //=> nothing below
                 {
                     Debug.Log("Player killed for floating.");
-                    player.CmdKill();
-                    player.CmdRequestRespawn();
+                    PlayerManager.KillPlayer();
+                    PlayerManager.RespawnInvoke(3);
                 }
         }
     }
@@ -48,10 +51,11 @@ public class CollisionDetect : NetworkBehaviour {
     {
         if (Game_Manager.UpdateAllowed)
         {
-            if (Other.transform.parent.tag == "Enemy" & !player.isInvincible() & player.isAlive())
+            if (Other.transform.parent.tag == "Enemy" & !myPlayer.isInvincible() & myPlayer.isAlive())
             {
-                player.CmdKill();
-                player.CmdRequestRespawn();
+                
+                PlayerManager.KillPlayer();
+                PlayerManager.RespawnInvoke(3);
             }
         }
     }
