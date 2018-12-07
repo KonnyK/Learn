@@ -1,0 +1,2 @@
+C:\Users\konra\Desktop\Dokumente\Unity Projects\Dodgeball\obj\Debug\Assembly-CSharp.csprojAssemblyReference.cache
+C:\Users\konra\Desktop\Dokumente\Unity Projects\Dodgeball\obj\Debug\Assembly-CSharp.csproj.CoreCompileInputs.cache

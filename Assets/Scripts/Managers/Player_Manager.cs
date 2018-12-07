@@ -20,28 +20,39 @@ public class Player_Manager : NetworkBehaviour
             PlayerPool.tag = PlayerPoolTag;
             NetworkServer.Spawn(PlayerPool.gameObject);
         }
-        if (PlayerPool == null) {
-            if (hasAuthority)
-            {
-                PlayerPool = GameObject.FindGameObjectWithTag(PlayerPoolTag).transform;
-                PlayerPool.name = PlayerPoolName;
-            }
-            else { Invoke("Initialize", 1); return; }
+        if (PlayerPool == null)
+        {
+            PlayerPool = GameObject.FindGameObjectWithTag(PlayerPoolTag).transform;
+            PlayerPool.name = PlayerPoolName;
         }
-        
+        Debug.Log("Initializing PlayerManager: " + PlayerPool.name, this);
         Player P = GetComponent<Player>();
         if (isServer)
         {
             int P_Number = checked((int)this.netId.Value);
-            P.RpcSetNumber(P_Number);
+            P.SetNumber(P_Number);
         }
         Transform Mesh = Instantiate(PlayerModels[0], PlayerPool).transform;
+        Debug.Log("Instantiate mnesh", this);
         foreach (Transform T in Mesh) if (T.tag == "Mesh") { Mesh = T; break; }
         P.SetMesh(Mesh);
         P.SetNewControls();
-        transform.GetComponent<Movement>().enabled = Mesh.parent.GetComponentInChildren<PlayerCamControl>().enabled = hasAuthority;
+        Mesh.GetComponent<Movement>().enabled =
+            Mesh.parent.GetComponentInChildren<PlayerCamControl>().GetComponent<Camera>().enabled =
+                Mesh.parent.GetComponentInChildren<PlayerCamControl>().enabled = 
+                    hasAuthority;
         Mesh.GetComponent<CollisionDetect>().enabled = isServer;
-        if (isServer) Mesh.GetComponent<CollisionDetect>().Initialize(transform);
+        if (isServer)
+        {
+            Mesh.GetComponent<CollisionDetect>().Initialize(transform);
+            GetComponent<Game_Manager>().RpcDebug("Authority Player initialized on Server");
+            if (!hasAuthority)
+            {
+                GetComponent<Game_Manager>().RpcDebug("No Authority Player initialized on Server");
+            }
+        }
+        else if (hasAuthority) CmdRespawnPlayer();
+        
     }
 
     [Server] public void RespawnAll()
@@ -54,20 +65,20 @@ public class Player_Manager : NetworkBehaviour
         GetComponent<Player>().ChangeStatus(-2);
         Invoke("RespawnPlayer", Seconds);
     }
+    [Command] private void CmdRespawnPlayer() { RespawnPlayer(); }
     [Server] private void RespawnPlayer()
     {
-        FindNewSpawn();
         Player P = GetComponent<Player>();
-        P.RpcOrientateMesh(Spawn, Quaternion.LookRotation(Vector3.ProjectOnPlane(Random.insideUnitSphere, Vector3.up), Vector3.up));
+        FindNewSpawn();
+        P.RpcRefreshImpulse(Spawn, Vector3.zero, Quaternion.LookRotation(Vector3.ProjectOnPlane(Random.insideUnitSphere, Vector3.up), Vector3.up), true);
         P.ChangeStatus(2);
     }
 
     [Server] public void KillPlayer()
     {
-        Debug.Log("Player died!");
+        Debug.Log("Player died!", this);
         Player P = GetComponent<Player>();
         P.IncDeathCount();
-        P.RpcOrientateMesh(P.Mesh.position, Quaternion.LookRotation(Vector3.up, -P.getRB().velocity));
         P.ChangeStatus(-1);
     }
 
@@ -104,7 +115,7 @@ public class Player_Manager : NetworkBehaviour
         {
             Debug.Log("Found new Spawn after " + TryAmount + " tries.", this);
             Debug.DrawLine(Vector3.zero, newPos, Color.red, 1000); // newfound SpawnPos
-            Spawn = newPos + Vector3.up * 5;
+            Spawn = newPos + Vector3.up;
         }
     }
 }

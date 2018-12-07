@@ -20,43 +20,43 @@ public class Game_Manager : NetworkBehaviour {
     public Enemy_Manager getEnemyManager() { return EnemyManager; }
 
     [ClientRpc] private void RpcAllowUpdate(bool NewState) { UpdateAllowed = NewState; }
-    [Command] private void CmdAllowUpdate(bool NewState) { UpdateAllowed = NewState; }
-
-    public void AllowUpdate(bool NewState)
+    [Command] private void CmdFetchAllowUpdateStatus() { RpcAllowUpdate(UpdateAllowed); }
+    [Server] private void AllowUpdate(bool NewState)
     {
-        if (!(hasAuthority || isServer)) return;
         UpdateAllowed = NewState;
-        if (isServer) RpcAllowUpdate(NewState);
-        else CmdAllowUpdate(NewState);
+        RpcAllowUpdate(NewState);
     }
+
 
     [Command] void CmdFetchMasterNetId() { RpcSetMasterNetId(MasterNetId); }
     [ClientRpc] void RpcSetMasterNetId(uint ID) { MasterNetId = ID; }
 
-    public override void OnStartClient()
+    public void Start()
     {
         if (hasAuthority)
         { 
             LocalManager = this;
             if (isServer) MasterNetId = this.netId.Value;
-            else CmdFetchMasterNetId();
+            else
+            {
+                CmdFetchMasterNetId();
+                CmdFetchAllowUpdateStatus();
+            }
         }
         else if (LocalManager == null)
         {//making sure Players executing Start() before the localauthority will retry refreshing their name after a localauthority is done
-            Invoke("OnStartClient", 1);
+            Invoke("Start", 1);
             return;
         }
 
 
-        //PlayerManager.RegisterNewPlayer(transform.GetComponent<Player>());
-        //transform.GetComponentInChildren<MapCamControl>().Initialize();
         LevelManager = LocalManager.GetComponent<Level_Manager>();
         PlayerManager = LocalManager.GetComponent<Player_Manager>();
         EnemyManager = LocalManager.GetComponent<Enemy_Manager>();
 
         FetchName();
 
-        PlayerManager.Initialize();
+        GetComponent<Player_Manager>().Initialize();
         if (hasAuthority)
         {
             GetComponent<AudioListener>().enabled = true;
@@ -68,9 +68,9 @@ public class Game_Manager : NetworkBehaviour {
         else if (!isServer)
         {
             transform.GetComponent<Level_Manager>().enabled = false;
-            transform.GetComponent<Player_Manager>().enabled = false;
             transform.GetComponent<Enemy_Manager>().enabled = false;
         }
+       
     }
 
     [Server]
@@ -82,6 +82,8 @@ public class Game_Manager : NetworkBehaviour {
         PlayerManager.RespawnAll();
         AllowUpdate(true);
     }
+
+    [ClientRpc] public void RpcDebug(string Message) { Debug.Log(Message, this); }
 
     private void FetchName()
     {

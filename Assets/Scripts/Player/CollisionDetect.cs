@@ -15,34 +15,44 @@ public class CollisionDetect : MonoBehaviour {
         PlayerManager = T.GetComponent<Player_Manager>();
         myPlayer = T.GetComponent<Player>();
         Mesh = myPlayer.getRB().transform;
+        Debug.Log("ColDetect Init", Mesh);
     }
 
     void Update()
     {
+                Debug.Log("Movement: " + Game_Manager.UpdateAllowed + " " + myPlayer.isAlive());
         if (Game_Manager.UpdateAllowed)
         {
             RaycastHit Hit;
-            if (myPlayer.isAlive()) if (Physics.Raycast(Mesh.position, Vector3.down, out Hit))
+            if (myPlayer.isAlive())
+            {
+                if (Physics.Raycast(Mesh.position, Vector3.down, out Hit))
                 {
                     //handles Invincibility if Alive and something is below
                     if (Hit.transform.gameObject.tag == "CP")
                     {
+                        Debug.Log("CollisionRay hit CP", this);
                         myPlayer.ChangeStatus(2);
                         //Loading next Level if its  the last Checkpoint
                         if (GameManager.getLevelManager().IsInGoal(Mesh.position))
                         {
-                            Debug.Log("Final Checkpoint!");
+                            Debug.Log("Final Checkpoint!", this);
                             GameManager.PrepareNextLvl();
                         }
                     }
-                    else if (Hit.transform.gameObject.tag == "PF") myPlayer.ChangeStatus(1);
+                    else if (Hit.transform.gameObject.tag == "PF")
+                    {
+                        myPlayer.ChangeStatus(1);
+                        Debug.Log("CollisionRay hit PF", this);
+                    }
                 }
                 else //=> nothing below
                 {
-                    Debug.Log("Player killed for floating.");
+                    Debug.Log("CollisionRay hit nothing",this);
                     PlayerManager.KillPlayer();
                     PlayerManager.RespawnInvoke(3);
                 }
+            }
         }
     }
 
@@ -51,11 +61,11 @@ public class CollisionDetect : MonoBehaviour {
     {
         if (Game_Manager.UpdateAllowed)
         {
-            if (Other.transform.parent.tag == "Enemy" & !myPlayer.isInvincible() & myPlayer.isAlive())
+            if (Other.transform.parent.tag == "Enemy" && !myPlayer.isInvincible() && myPlayer.isAlive())
             {
-                
+                Debug.Log("collision with Enemy", this);
                 PlayerManager.KillPlayer();
-                PlayerManager.RespawnInvoke(3);
+                PlayerManager.RespawnInvoke(10);
             }
         }
     }

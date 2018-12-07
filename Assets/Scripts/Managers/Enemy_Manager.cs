@@ -22,6 +22,7 @@ public class Enemy_Manager : NetworkBehaviour {
         }
     }
 
+    
     [SerializeField] private GameObject[] EnemyDesigns; //set in Prefab
     private static Level_Manager LevelManager;
 
@@ -33,7 +34,7 @@ public class Enemy_Manager : NetworkBehaviour {
     private static readonly string EnemyParentName = "Enemies";
     private readonly string EnemyParentTag = "EnemyParent";
     [SerializeField] private GameObject EnemyParentObject; //set in prefab
-    
+
     ///
     ///
 
@@ -43,22 +44,24 @@ public class Enemy_Manager : NetworkBehaviour {
     public static float getMaxDistance() { return LevelManager.getLevelRadius(); }
     public static Vector3 getSpawn() { return SpawnPos; }
 
-    public void Initialize()  
+    public void Initialize()
     {
         LevelManager = gameObject.GetComponent<Game_Manager>().getLevelManager();
-        if (hasAuthority)
+        if (!hasAuthority) return;
+
+        if (isServer)
         {
-            if (isServer)
-            {
-                EnemyParent = Instantiate(EnemyParentObject).transform;
-                EnemyParent.name = EnemyParentName;
-                EnemyParent.tag = EnemyParent.tag;
-                NetworkServer.Spawn(EnemyParent.gameObject);
-                SyncValues();
-            }
-            else CmdRequestSyncValues();
+            EnemyParent = Instantiate(EnemyParentObject).transform;
+            EnemyParent.name = EnemyParentName;
+            EnemyParent.tag = EnemyParent.tag;
+            NetworkServer.Spawn(EnemyParent.gameObject);
+            SyncValues();
+        GetComponent<Game_Manager>().RpcDebug("EnemyManager on Server initialized");
         }
+        else CmdRequestSyncValues();
+
     }
+
 
     [Command]
     private void CmdRequestSyncValues()
@@ -121,8 +124,9 @@ public class Enemy_Manager : NetworkBehaviour {
         RB.angularVelocity = E.getRandomNumber(1) * 10 * Vector3.up;
     }
 
-    [Server] public void FixedUpdate()
+    public void FixedUpdate()
     {
+        if (!isServer) return;
         if ((Enemies.Count < 1) || !hasAuthority) return;
         for (int i = 0; i < Enemies.Count; i++) if (Vector3.Magnitude(EnemyParent.GetChild(Enemies[i].getIndex()).position - SpawnPos) > MaxDistance)
         {

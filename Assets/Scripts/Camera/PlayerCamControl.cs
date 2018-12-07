@@ -6,19 +6,19 @@ public class PlayerCamControl: MonoBehaviour {
 
     [SerializeField] private float Height;
     [SerializeField] private float Angle;
-    private Transform Target;
+    [SerializeField] private Transform Target;
     private KeyCode MapActivatorKey = KeyCode.None;
 
     public void SetKeyCode(KeyCode K)
     {
         MapActivatorKey = K;
-        Target = transform.parent.GetChild(0);
+        Debug.Log("Camera button set " + Target.parent.name, this);
     }
 
     void Update () {
+        //Debug.Log("P_Cam on with " + MapActivatorKey + " " + Game_Manager.UpdateAllowed, this);
         if (Game_Manager.UpdateAllowed && MapActivatorKey != KeyCode.None)
         {
-
             if (Input.GetKeyDown(MapActivatorKey)) transform.GetComponent<Camera>().enabled = false;
             if (Input.GetKeyUp(MapActivatorKey)) transform.GetComponent<Camera>().enabled = true;
 
@@ -29,4 +29,5 @@ public class PlayerCamControl: MonoBehaviour {
             transform.rotation = Quaternion.LookRotation(Target.position - transform.position, Vector3.up);
         }
     }
+
 }

@@ -7,71 +7,71 @@ public class Movement : MonoBehaviour {
     [SerializeField] private float Acceleration = 300;
     [SerializeField] private float MaxSpeed = 20;
     private Vector3 TargetPos;
-    [SerializeField] private Transform TargetMarker; //set in Editor
-    [SerializeField] private Player myPlayer; //set in Editor
+    [SerializeField] private Transform TargetMarker; 
+    private Player myPlayer; //set in Editor
     private Rigidbody RB;
-    private Transform Mesh;
+    private bool VelChanged = true;
     [SerializeField] private Camera PlayerCam; //set in, you guessed it, Editor
     [SerializeField] private Controls currentControls;
-    private bool TargetCancelled = false; //used to prevent Target from being used again instatntly eventhough it was cancelled (holding both mouse buttons)
+    [SerializeField] private bool TargetCancelled = false; //used to prevent Target from being used again instatntly eventhough it was cancelled (holding both mouse buttons)
 
-    public void Initialize()
+    public void Initialize(Player P)
     {
-        RB = myPlayer.getRB();
-        Mesh = myPlayer.Mesh;
-        PlayerCam = myPlayer.Mesh.parent.GetComponentInChildren<PlayerCamControl>().GetComponent<Camera>();
+        myPlayer = P;
         currentControls = myPlayer.getControls();
+        RB = GetComponent<Rigidbody>();
     }
 
     public void ClearTarget()
     {
         TargetMarker.gameObject.SetActive(false);
-        TargetMarker.position = Mesh.position;
-        TargetPos = Mesh.position;
+        TargetMarker.position = transform.position;
+        TargetPos = transform.position;
     }
 
     private void FixedUpdate()
     {
+        //Debug.Log("PLayerAlive:" + myPlayer.isAlive(), myPlayer);
         if (Game_Manager.UpdateAllowed && myPlayer.isAlive())
         {
-            if (Input.GetMouseButtonDown(0)) TargetCancelled = false; //needed because somtimes MouseButtonUp is not recognized
+            //if (myPlayer.isServer) myPlayer.GetComponent<Game_Manager>().RpcDebug("Movement started on Server");
+            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonUp(0)) TargetCancelled = false; //needed because somtimes MouseButtonUp is not recognized
                                                                       //Managing TargetMarker
             if (Input.GetMouseButton(0) && !TargetCancelled)
             {
                 RaycastHit Hit;
                 if (Physics.Raycast(PlayerCam.ScreenPointToRay(Input.mousePosition), out Hit) && (Hit.transform.tag == "CP" | Hit.transform.tag == "PF"))
                 {
-                    TargetPos = Hit.point; //TargetPos used for movetowards when TargetMarker active
                     TargetMarker.gameObject.SetActive(true);
-                    TargetMarker.position = TargetPos;
+                    TargetMarker.position = TargetPos = Hit.point; //TargetPos used for movetowards when TargetMarker active
                 }
 
             }
             //Clear Target on right click or make it changeable by releasing left button
-            if (Input.GetMouseButtonUp(0)) TargetCancelled = false;
             if (Input.GetMouseButton(1))
             {
                 ClearTarget();
                 TargetCancelled = false;
             }
-
+            
 
             Vector3 NewDirection = Vector3.zero;
             //Moving with Mouse
-            if (TargetMarker.gameObject.activeSelf) if (Vector3.Magnitude(TargetPos - Mesh.position) > TargetMarker.lossyScale.x)
-                {
-                    NewDirection = Vector3.Normalize(Vector3.ProjectOnPlane(TargetPos - Mesh.position, Vector3.up));
-                }
-                else
-                {
-                    ClearTarget();
-                    RB.velocity = Vector3.zero;
-                }
-            TargetMarker.position = TargetPos; //stopping TargetMarker from moving with its parent
+            if (TargetMarker.gameObject.activeSelf)
+            {
+                VelChanged = true;
+                NewDirection = Vector3.Normalize(Vector3.ProjectOnPlane(TargetPos - transform.position, Vector3.up));
+                Debug.Log("Moving with Mouse");
+            }
 
             //Moving with WASD
             Vector2 Dir = currentControls.getDir();
-            NewDirection = Vector3.Normalize(NewDirection + Vector3.Normalize(new Vector3(Dir.x, 0, Dir.y)));
+            if (Dir != Vector2.zero)
+            {
+                VelChanged = true;
+                Debug.Log("Moving with Keys");
+                NewDirection = Vector3.Normalize(NewDirection + Vector3.Normalize(new Vector3(Dir.x, 0, Dir.y)));
+            }
 
             RB.AddForce(Acceleration * NewDirection, ForceMode.Impulse);
 
@@ -79,14 +79,17 @@ public class Movement : MonoBehaviour {
             if (Input.GetKey(currentControls.getKey("Stop")))
             {
                 ClearTarget();
+                Debug.Log("Stopped Moving", this);
                 RB.velocity = Vector3.zero;
+                VelChanged = true;
             }
 
 
 
             //Player tries to move away from activeTarget with WASD
-            if (TargetMarker.gameObject.activeSelf & Mathf.Abs(Vector3.Angle(new Vector3(Dir.x, 0, Dir.y), TargetPos - Mesh.position)) >= 145)
+            if (TargetMarker.gameObject.activeSelf && Dir != Vector2.zero && Mathf.Abs(Vector3.Angle(new Vector3(Dir.x, 0, Dir.y), TargetPos - transform.position)) >= 145)
             {
+                Debug.Log("Player moves away", this);
                 ClearTarget();
                 TargetCancelled = true;
             }
@@ -95,14 +98,28 @@ public class Movement : MonoBehaviour {
             if (RB.velocity.magnitude > MaxSpeed) RB.velocity = Vector3.ClampMagnitude(RB.velocity, MaxSpeed);
 
             currentControls.DecreaseMovement(false); //slowly decreases the Axis in Controls script
-            myPlayer.CmdSetNewCourse(Mesh.position, RB.velocity);
+
+            if (VelChanged)
+            {
+                transform.rotation = Quaternion.LookRotation(Vector3.ProjectOnPlane(RB.velocity, Vector3.up), Vector3.up);
+                VelChanged = false;
+            }
         }
 
         else //when Player is dead or Update is not allowed
         {
-            currentControls.DecreaseMovement(true); //resets Axis to 0;
+            Debug.Log("Player dead or Game paused, not moving", this);
+            currentControls.DecreaseMovement(true); //instantly resets Axis to 0;
             ClearTarget(); //clear Target if dead
         }
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.tag == "MovementTarget")
+        {
+            ClearTarget();
+            RB.velocity = Vector3.zero;
+        }
+    }
 }

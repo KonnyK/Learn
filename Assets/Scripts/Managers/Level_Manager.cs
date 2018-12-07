@@ -49,20 +49,22 @@ public class Level_Manager : NetworkBehaviour {
     public void Initialize()
     {
         EnemyManager = gameObject.GetComponent<Game_Manager>().getEnemyManager();
-        if (hasAuthority)
+        if (!hasAuthority) return;
+
+        if (isServer)
         {
-            if (isServer)
-            {
-                for (int i = -1; i < LevelAmount; i++) Levels.Add(BuildNewLevel());
-                LevelTransform = Instantiate(LevelTransformObject).transform;
-                LevelTransform.name = LevelTransformName;
-                LevelTransform.tag = LevelTransformTag;
-                NetworkServer.Spawn(LevelTransform.gameObject);
-                Debug.Log("Created LvLTrans: " + LevelTransform.GetComponent<NetworkIdentity>().netId.Value, this);
-                SyncValues();
-            }
-            else CmdRequestSyncValues();
+            for (int i = -1; i < LevelAmount; i++) Levels.Add(BuildNewLevel());
+            LevelTransform = Instantiate(LevelTransformObject).transform;
+            LevelTransform.name = LevelTransformName;
+            LevelTransform.tag = LevelTransformTag;
+            NetworkServer.Spawn(LevelTransform.gameObject);
+            Debug.Log("Created LvLTrans: " + LevelTransform.GetComponent<NetworkIdentity>().netId.Value, this);
+            SyncValues();
+        GetComponent<Game_Manager>().RpcDebug("LevelManager on Server initialized");
         }
+        else CmdRequestSyncValues();
+
+        
     }
 
     [Server]
