@@ -26,7 +26,7 @@ public class Enemy_Manager : NetworkBehaviour {
     [SerializeField] private GameObject[] EnemyDesigns; //set in Prefab
     private static Level_Manager LevelManager;
 
-    private static Vector3 SpawnPos = Vector3.zero;
+    private static Vector3 SpawnPos = Vector3.up;
     private static float MaxDistance = 100;
 
     private static Transform EnemyParent;

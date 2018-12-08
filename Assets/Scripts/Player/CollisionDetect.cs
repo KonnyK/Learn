@@ -37,6 +37,7 @@ public class CollisionDetect : MonoBehaviour {
                         if (GameManager.getLevelManager().IsInGoal(Mesh.position))
                         {
                             Debug.Log("Final Checkpoint!", this);
+                            myPlayer.ChangeStatus(0);
                             GameManager.PrepareNextLvl();
                         }
                     }

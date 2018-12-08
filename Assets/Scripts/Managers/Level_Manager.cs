@@ -96,7 +96,7 @@ public class Level_Manager : NetworkBehaviour {
             for (int i = 0; i < Levels.Count; i++) if (Levels[i].Equals(CurrentLevel)) { Debug.Log("Found a similiar Level"); CurrentLvlNum = i; }
             CurrentLevel = Levels[CurrentLvlNum + 1];
         }
-
+        LevelTransform.GetComponent<ObjectPoolManager>().ClearChildren();
         GameObject[] Designs = { Checkpoints[CurrentLevel.getDesign()], Platforms[CurrentLevel.getDesign()] };
         CurrentLevel.Instantiate(LevelTransform, Designs);
         LevelTransform.GetComponent<ObjectPoolManager>().OverwriteChildren();
@@ -165,5 +165,10 @@ public class Level_Manager : NetworkBehaviour {
         SpawnAreaPos = SpawnPos;
         SpawnAreaSize = SpawnSize;
         GoalPosition = GoalPos;
+    }
+
+    public void Update()
+    {
+        RenderSettings.skybox.mainTextureOffset += Vector2.right;
     }
 }

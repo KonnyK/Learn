@@ -62,7 +62,7 @@ public class ObjectPoolManager : NetworkBehaviour {
         RpcClear();
         foreach (Transform Child in transform) OverwriteChild(Child.GetSiblingIndex());
     }
-	private void ClearChildren()
+	public void ClearChildren()
     {
         foreach (Transform Child in transform) Destroy(Child.gameObject);
     }

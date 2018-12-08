@@ -60,6 +60,11 @@ public class Player_Manager : NetworkBehaviour
         foreach (GameObject P in GameObject.FindGameObjectsWithTag("Player")) P.GetComponent<Player_Manager>().RespawnPlayer();
     }
 
+    [Server] public void ChangeStatusInAll(int newStatus)
+    {
+        foreach (GameObject P in GameObject.FindGameObjectsWithTag("Player")) P.GetComponent<Player>().ChangeStatus(newStatus);
+    }
+
     [Server] public void RespawnInvoke(int Seconds)
     {
         GetComponent<Player>().ChangeStatus(-2);
