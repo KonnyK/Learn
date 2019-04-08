@@ -7,7 +7,7 @@ public class ObjectPoolManager : NetworkBehaviour {
 
     [SerializeField] GameObject[] Types; //set in Editor
 
-    [ClientRpc] public void RpcClear(){ if (!isServer) ClearChildren(); }
+    [ClientRpc] public void RpcClear(){ if (!isServer) foreach (Transform Child in transform) Destroy(Child.gameObject); }
     [ClientRpc] private void RpcAddChild(Vector3 Pos, Quaternion Rot, Vector3 Scale, int Type, Vector3 Vel, Vector3 AngVel)
     {
         if (isServer) return;
@@ -56,18 +56,15 @@ public class ObjectPoolManager : NetworkBehaviour {
 
     [ClientRpc] private void RpcReRotate(Quaternion Rot) { if (!isServer) transform.rotation = Rot; }
 
-    [Server] public void OverwriteChildren()
+    [Server] public void OverwriteChildren() { Invoke("OverwriteAll", 1); }
+    [Server] private void OverwriteAll()
     {
-        RpcReRotate(transform.rotation);
         RpcClear();
-        foreach (Transform Child in transform) OverwriteChild(Child.GetSiblingIndex());
+        RpcReRotate(transform.rotation);
+        foreach (Transform Child in transform) OverwriteChild(Child.GetSiblingIndex()); 
     }
-	public void ClearChildren()
-    {
-        foreach (Transform Child in transform) Destroy(Child.gameObject);
-    }
-    [ClientRpc]
-    public void RpcRename(string Name, string Tag)
+	
+    [ClientRpc] public void RpcRename(string Name, string Tag)
     {
         gameObject.name = Name;
         gameObject.tag = Tag;

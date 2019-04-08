@@ -1,126 +1,77 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.Networking;
+﻿using UnityEngine;
 
-public class Player_Manager : NetworkBehaviour
+public class Player_Manager : MonoBehaviour
 {
-    private static readonly string PlayerPoolTag = "PlayerPool";
-    private static readonly string PlayerPoolName = "PlayerPool";
-    private static Transform PlayerPool = null;
-    [SerializeField] private GameObject PlayerPoolObject; //set in editor
     [SerializeField] private GameObject[] PlayerModels; // set in Editor
-    [SyncVar] private Vector3 Spawn = Vector3.zero;
+    private Vector3 Spawn = Vector3.zero;
+    private Player RespawningPlayer = null;
 
     public void Initialize()
     {
-        if (isServer && hasAuthority)
-        {
-            PlayerPool = Instantiate(PlayerPoolObject).transform;
-            PlayerPool.name = PlayerPoolName;
-            PlayerPool.tag = PlayerPoolTag;
-            NetworkServer.Spawn(PlayerPool.gameObject);
-        }
-        if (PlayerPool == null)
-        {
-            PlayerPool = GameObject.FindGameObjectWithTag(PlayerPoolTag).transform;
-            PlayerPool.name = PlayerPoolName;
-        }
-        Debug.Log("Initializing PlayerManager: " + PlayerPool.name, this);
-        Player P = GetComponent<Player>();
-        if (isServer)
-        {
-            int P_Number = checked((int)this.netId.Value);
-            P.SetNumber(P_Number);
-        }
-        Transform Mesh = Instantiate(PlayerModels[0], PlayerPool).transform;
-        Debug.Log("Instantiate mnesh", this);
-        foreach (Transform T in Mesh) if (T.tag == "Mesh") { Mesh = T; break; }
-        P.SetMesh(Mesh);
-        P.SetNewControls();
-        Mesh.GetComponent<Movement>().enabled =
-            Mesh.parent.GetComponentInChildren<PlayerCamControl>().GetComponent<Camera>().enabled =
-                Mesh.parent.GetComponentInChildren<PlayerCamControl>().enabled = 
-                    hasAuthority;
-        Mesh.GetComponent<CollisionDetect>().enabled = isServer;
-        if (isServer)
-        {
-            Mesh.GetComponent<CollisionDetect>().Initialize(transform);
-            GetComponent<Game_Manager>().RpcDebug("Authority Player initialized on Server");
-            if (!hasAuthority)
-            {
-                GetComponent<Game_Manager>().RpcDebug("No Authority Player initialized on Server");
-            }
-        }
-        else if (hasAuthority) CmdRespawnPlayer();
-        
+        CreatePlayer(0, 1);
     }
 
-    [Server] public void RespawnAll()
+    public void CreatePlayer(int Type, int Number)
     {
-        foreach (GameObject P in GameObject.FindGameObjectsWithTag("Player")) P.GetComponent<Player_Manager>().RespawnPlayer();
+        Player P = Instantiate(PlayerModels[Type], transform).GetComponent<Player>();
+        P.transform.name = "Player" + Number;
+        P.SetNumber(Number);
     }
 
-    [Server] public void ChangeStatusInAll(int newStatus)
+    public void RespawnAll()
     {
-        foreach (GameObject P in GameObject.FindGameObjectsWithTag("Player")) P.GetComponent<Player>().ChangeStatus(newStatus);
+        foreach (Player P in transform.GetComponentsInChildren<Player>()) RespawnPlayer();
     }
 
-    [Server] public void RespawnInvoke(int Seconds)
+    public void ChangeStatusInAll(int newStatus)
     {
-        GetComponent<Player>().ChangeStatus(-2);
-        Invoke("RespawnPlayer", Seconds);
+        foreach (Player P in transform.GetComponentsInChildren<Player>()) P.ChangeStatus(newStatus);
     }
-    [Command] private void CmdRespawnPlayer() { RespawnPlayer(); }
-    [Server] private void RespawnPlayer()
+
+    public void RespawnInvoke(int Seconds, Player P)
     {
-        Player P = GetComponent<Player>();
+        RespawningPlayer = P;
+        RespawningPlayer.ChangeStatus(-2);
+        Invoke("RespawnPlayer",Seconds + System.Convert.ToInt16(RespawningPlayer.GetComponent<ParticleSystem>().main.duration));
+    }
+
+    private void RespawnPlayer()
+    {
+        if (RespawningPlayer == null) RespawningPlayer = GetComponentInChildren<Player>();
+        else if (RespawningPlayer.isAlive()) return;
         FindNewSpawn();
-        P.RpcRefreshImpulse(Spawn, Vector3.zero, Quaternion.LookRotation(Vector3.ProjectOnPlane(Random.insideUnitSphere, Vector3.up), Vector3.up), true);
-        P.ChangeStatus(2);
+        RespawningPlayer.ChangeStatus(2);
+        RespawningPlayer.transform.position = Spawn;
+        RespawningPlayer.transform.rotation = Quaternion.LookRotation(Vector3.ProjectOnPlane(Random.insideUnitSphere, Game_Manager.LevelManager.transform.up), Game_Manager.LevelManager.transform.up);
+        RespawningPlayer = null;
     }
 
-    [Server] public void KillPlayer()
+    public void KillPlayer(Player P)
     {
         Debug.Log("Player died!", this);
-        Player P = GetComponent<Player>();
+        P.GetComponent<ParticleSystem>().Play();
+        P.transform.rotation = Quaternion.LookRotation(-Game_Manager.LevelManager.transform.up, P.transform.forward);
+        transform.position += Vector3.up * PlayerModels[P.Type].transform.localScale.z/2;
+        //P.Mesh.GetComponent<AudioSource>().Play();
         P.IncDeathCount();
         P.ChangeStatus(-1);
     }
 
 
     //randomly choose a new Spawnlocation and check if Spawning is safe
-    [Server] private void FindNewSpawn()
+    private void FindNewSpawn()
     {
-        //Debug.Log("FindNewSpawn", this);
-        Level_Manager LevelManager = transform.GetComponent<Game_Manager>().getLevelManager();
-
+        
         //draw Debug Box
-        Vector3 V0 = LevelManager.GetSpawnArea()[0];
-        Vector3 V1 = V0 + LevelManager.GetSpawnArea()[1];
+        Vector3 V0 = Game_Manager.LevelManager.GetSpawnArea()[0];
+        Vector3 V1 = V0 + Game_Manager.LevelManager.GetSpawnArea()[1];
         Debug.DrawLine(new Vector3(V0.x, V1.y, V1.z), V1, Color.green, 1000);//Possible SpawnArea
         Debug.DrawLine(new Vector3(V1.x, V1.y, V0.z), V1, Color.green, 1000);
         Debug.DrawLine(new Vector3(V0.x, V0.y, V1.z), V0, Color.green, 1000);
         Debug.DrawLine(new Vector3(V1.x, V0.y, V0.z), V0, Color.green, 1000);
 
-        int MaxTries = 100; //after more tries to find a spawn it stops searching
-        int TryAmount = 0;
-        RaycastHit Hit;
-        Vector3 newPos = Vector3.zero;
-        do
-        {
-            //randomly generating Position
-            newPos = LevelManager.GetSpawnArea()[0];
-            newPos.x += UnityEngine.Random.value * (LevelManager.GetSpawnArea()[1].x);
-            newPos.y += UnityEngine.Random.value * (LevelManager.GetSpawnArea()[1].y);
-            newPos.z += UnityEngine.Random.value * (LevelManager.GetSpawnArea()[1].z);
-            TryAmount++;
-
-        } while ((!Physics.Raycast(newPos, Vector3.down, out Hit) || Hit.transform.tag != "CP") && TryAmount <= MaxTries);
-        if (TryAmount <= MaxTries)
-        {
-            Debug.Log("Found new Spawn after " + TryAmount + " tries.", this);
-            Debug.DrawLine(Vector3.zero, newPos, Color.red, 1000); // newfound SpawnPos
+            Vector3 newPos = Game_Manager.LevelManager.getFirstPos() + Vector3.ProjectOnPlane(Random.insideUnitSphere * Level_Manager.VoidWidth/2, Game_Manager.LevelManager.transform.up);
+            newPos += Game_Manager.LevelManager.transform.up * 2;
             Spawn = newPos + Vector3.up;
-        }
     }
 }

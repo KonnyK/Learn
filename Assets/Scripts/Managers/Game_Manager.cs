@@ -1,106 +1,59 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking;
 
-public class Game_Manager : NetworkBehaviour {
+public class Game_Manager : MonoBehaviour {
 
-    public static readonly string ServerGameManagerName = "Master"; //Name of the GameObject/GameManager that has local authority on Server, name is for all clients
-    public static readonly string LocalAuthorityGameManagerName = "Local"; //Name of the GameObject/GameManager with localAuthority, different for everyone, there's no local on the server
-    public static readonly string NoAuthorityGameManagerName = "Other";
     [SerializeField] public static bool UpdateAllowed = false; //used for pausing the game
-    private Level_Manager LevelManager;
-    private Player_Manager PlayerManager;
-    private Enemy_Manager EnemyManager;
-    private static Game_Manager LocalManager = null;
-    private static uint MasterNetId = 0;
+    public static Level_Manager LevelManager;
+    public static Enemy_Manager EnemyManager;
+    public static Player_Manager PlayerManager;
+    public float TimeScale = 1;
 
-    public Level_Manager getLevelManager() { return LevelManager; }
-    public Player_Manager getPlayerManager() { return PlayerManager; }
-    public Enemy_Manager getEnemyManager() { return EnemyManager; }
+    [SerializeField] private Transform[] Managers; //set in Editor, 1:LM, 2:EM 3:PM
 
-    [ClientRpc] private void RpcAllowUpdate(bool NewState) { UpdateAllowed = NewState; }
-    [Command] private void CmdFetchAllowUpdateStatus() { RpcAllowUpdate(UpdateAllowed); }
-    [Server] private void AllowUpdate(bool NewState)
+    private static void AllowUpdate(bool NewState)
     {
         UpdateAllowed = NewState;
-        RpcAllowUpdate(NewState);
     }
 
-
-    [Command] void CmdFetchMasterNetId() { RpcSetMasterNetId(MasterNetId); }
-    [ClientRpc] void RpcSetMasterNetId(uint ID) { MasterNetId = ID; }
-
+    private static bool hasStarted = false;
     public void Start()
     {
-        if (hasAuthority)
-        { 
-            LocalManager = this;
-            if (isServer) MasterNetId = this.netId.Value;
-            else
-            {
-                CmdFetchMasterNetId();
-                CmdFetchAllowUpdateStatus();
-            }
-        }
-        else if (LocalManager == null)
-        {//making sure Players executing Start() before the localauthority will retry refreshing their name after a localauthority is done
-            Invoke("Start", 1);
-            return;
-        }
-
-
-        LevelManager = LocalManager.GetComponent<Level_Manager>();
-        PlayerManager = LocalManager.GetComponent<Player_Manager>();
-        EnemyManager = LocalManager.GetComponent<Enemy_Manager>();
+        if (hasStarted) return;
+        LevelManager = Managers[0].GetComponent<Level_Manager>();
+        PlayerManager = Managers[1].GetComponent<Player_Manager>();
+        EnemyManager = Managers[2].GetComponent<Enemy_Manager>();
 
         FetchName();
 
-        GetComponent<Player_Manager>().Initialize();
-        if (hasAuthority)
-        {
-            GetComponent<AudioListener>().enabled = true;
-            LevelManager.Initialize();
-            EnemyManager.Initialize();
-            //even if PrepLevel checks for Authority this check is needed as well so PrepLvl only gets called once  when the game starts
-            if (isServer) PrepareNextLvl();
-        }
-        else if (!isServer)
-        {
-            transform.GetComponent<Level_Manager>().enabled = false;
-            transform.GetComponent<Enemy_Manager>().enabled = false;
-        }
-       
+        LevelManager.Initialize();
+        EnemyManager.Initialize();
+        PlayerManager.Initialize();
+
+        PrepareNextLvl();
     }
 
-    [Server]
-    public void PrepareNextLvl()
+    public static void InvokePrepareNextLvl(int Sec)
+    {
+        new WaitForSecondsRealtime(3);
+        PrepareNextLvl();
+    }
+    private static void PrepareNextLvl()
     {
         AllowUpdate(false);
-        Debug.Log("Preparing next lvl", this);
+        Debug.Log("Preparing next lvl");
         LevelManager.LoadNextLevel();
         PlayerManager.RespawnAll();
         AllowUpdate(true);
     }
 
-    [ClientRpc] public void RpcDebug(string Message) { Debug.Log(Message, this); }
-
     private void FetchName()
     {
-        if (hasAuthority)
-        {
-            if (isServer) gameObject.name = ServerGameManagerName; //Authority , Server
-            else gameObject.name = LocalAuthorityGameManagerName; //Authority , Client
-        }
-        else
-        {
-            if (isServer) gameObject.name = NoAuthorityGameManagerName; //No Authority , Server
-            else
-            {
-                //No Authority , Client
-                if (this.netId.Value == MasterNetId) gameObject.name = ServerGameManagerName;
-                else gameObject.name = NoAuthorityGameManagerName;
-            }
-        }
+        transform.name = "Host";
+    }
+    private void Update()
+    {
+        Time.timeScale = TimeScale;
     }
 }

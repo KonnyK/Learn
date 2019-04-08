@@ -13,6 +13,9 @@ public class Controls {
         {"Right", KeyCode.D},
         {"Stop", KeyCode.Space},
         {"Show Map", KeyCode.M},
+        {"Skill_1", KeyCode.Alpha1 },
+        {"Skill_2", KeyCode.Alpha2 },
+        {"Skill_3", KeyCode.Alpha3 },
         {"Chat", KeyCode.Return}
     };
     [SerializeField] private int HorAxis = 0;

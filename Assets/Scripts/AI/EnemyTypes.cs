@@ -2,16 +2,16 @@
 
 public class EnemyTypes {
 
-    public delegate Vector3 Func(Transform Entity, float[] Specifications);
+    public delegate Vector3 Func(Transform Entity, float[] Specifications); //Specifications = List of random floats 0...1
 
     [SerializeField]
     public static Func[] GetMoving = 
     {
-        new Func((Entity,Specs) =>
+        new Func(   (Entity,Specs) =>
         {
             float BaseSpeed = 20;
             float SpeedTolerance = (Specs[1] * 2 - 1) * 0.25f * BaseSpeed;
-            return new Vector3(Mathf.Cos(Mathf.PI*(Specs[0]*2-1)), 0,Mathf.Sin(Mathf.PI*(Specs[0]*2-1))).normalized * (BaseSpeed + SpeedTolerance);
+            return new Vector3( Mathf.Cos(Mathf.PI*(Specs[0]*2-1)), 0, Mathf.Sin(Mathf.PI*(Specs[0]*2-1)) ).normalized * (BaseSpeed + SpeedTolerance);
             /*
             Vector3 Vel = (0.25f + 0.125f * Random.value) * Vector3.Normalize(new Vector3(2 * Random.value - 1, 0, 2 * Random.value - 1));
             Debug.Log("New VEL:" + Vel);

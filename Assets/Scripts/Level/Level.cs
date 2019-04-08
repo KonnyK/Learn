@@ -24,8 +24,9 @@ public class Level
         return result;
     }
     public int getDesign() { return Design; }
-    public Vector3 getFirstPos() { return LocalToGlobalRotation(Path[0]); }
-    public Vector3 getLastPos() { return LocalToGlobalRotation(Path.Last()); }
+    public Vector3 getLastPos() { return getPos(Path.Count - 1); }
+    public Vector3 getPos(int Index) { return LocalToGlobalRotation(Path[Index]); }
+    public int getCPAmount() { return Path.Count; }
     public int getEnemyAmount() { return this.EnemyAmount; }
 
     //constructor
@@ -37,7 +38,7 @@ public class Level
 
         Path.Add(Vector3.forward * Level_Manager.GetMinRadius());//Goal Checkpoint
 
-        float Angle = AngleRange.x;// UnityEngine.Random.Range(AngleRange.x, AngleRange.y);
+        float Angle = UnityEngine.Random.Range(AngleRange.x, AngleRange.y);
         if (!Clockwise) Angle *= -1; //negative Angle = counterclockwise generation of checkpoints
 
         float CurrentPathLength = 0; //Lebgth of Path already generated
@@ -67,9 +68,8 @@ public class Level
         //Checkpoints
         foreach (Vector3 CP in Path)
         {
-            GameObject.Instantiate(Designs[0], CP, Quaternion.LookRotation(Vector3.forward, Vector3.up), parent);
-            Vector3 CurrentScale = parent.GetChild(parent.childCount - 1).transform.localScale;
-            parent.GetChild(parent.childCount - 1).transform.localScale = new Vector3(Level_Manager.GetWidth(), CurrentScale.y, Level_Manager.GetWidth());
+            Transform Checkpoint = GameObject.Instantiate(Designs[0], CP, Quaternion.LookRotation(Vector3.forward, Vector3.up), parent).transform;
+            Checkpoint.localScale = Vector3.Scale(Checkpoint.localScale, new Vector3(Level_Manager.GetWidth(), 1, Level_Manager.GetWidth()));
         }
 
         //Platforms
@@ -79,13 +79,29 @@ public class Level
             Vector3 Pos = (Path[i] + Path[i - 1]) / 2;
             //Rotation so that z-axis points form last to this Checkpoint
             Quaternion Rot = Quaternion.LookRotation(Path[i] - Path[i - 1], Vector3.up);
-            GameObject.Instantiate(Designs[1], Pos, Rot, parent);
+            Transform Current = GameObject.Instantiate(Designs[1], Pos, Rot, parent).transform;
             //scaling
-            Vector3 CurrentScale = parent.GetChild(parent.childCount - 1).transform.localScale;
-            parent.GetChild(parent.childCount - 1).transform.localScale =
-                new Vector3(Level_Manager.GetWidth(), CurrentScale.y, Vector3.Magnitude(Path[i] - Path[i - 1])); //changing scale
+            foreach (Transform Child in Current)
+            {
+                if (Child.GetSiblingIndex() == 0)
+                {
+                    Child.localScale = new Vector3(Level_Manager.GetWidth(), Current.GetChild(0).localScale.y, Vector3.Magnitude(Path[i] - Path[i - 1]) - Level_Manager.GetWidth()); //changing scale
+                    Child.GetComponent<MeshRenderer>().material = new Material(Child.GetComponent<MeshRenderer>().material);
+                    Child.GetComponent<MeshRenderer>().material.mainTextureScale = new Vector2(1, Child.localScale.z / Child.localScale.x);
+                }
+                else
+                {
+                    Child.localScale = new Vector3(Level_Manager.GetWidth(), Child.localScale.y, Level_Manager.GetWidth()); //changing scale
+                    Child.GetChild(0).GetComponent<MeshRenderer>().material = new Material(Child.GetChild(0).GetComponent<MeshRenderer>().material);
+                    Child.GetChild(0).GetComponent<MeshRenderer>().material.mainTextureScale = Vector2.one * Child.localScale.x / 18;
+                }
+            }
+            Current.GetChild(1).localPosition = new Vector3(0,0,Current.GetChild(0).localScale.z/2);
+            Current.GetChild(2).localPosition = new Vector3(0,0,-Current.GetChild(0).localScale.z/2);
+
         }
 
+        Debug.Log("Level Instantiated", parent);
         parent.Rotate(Vector3.up, LvlRotation);
     }
 }
